@@ -57,10 +57,7 @@ export const SettingsScreen: React.FC = () => {
     <View style={[S.root, { backgroundColor: colors.bgPage, paddingTop: insets.top }]}>
       {/* ── Header ── */}
       <View style={[S.header, { borderBottomColor: colors.outlineVariant }]}>
-        <TouchableOpacity
-          onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home' as never)}
-          style={S.headerBtn}
-        >
+        <TouchableOpacity onPress={() => navigation.goBack()} style={S.headerBtn}>
           <ChevronLeft size={28} color={colors.primary} strokeWidth={2} />
         </TouchableOpacity>
         <Text style={[S.headerTitle, { color: colors.textPrimary }]}>Settings</Text>
@@ -154,7 +151,7 @@ export const SettingsScreen: React.FC = () => {
         </View>
 
         {/* ── Footer ── */}
-        <Text style={[S.version, { color: colors.textSecondary }]}>Sudoku Premium Version 2.4.0</Text>
+        <Text style={[S.version, { color: colors.textSecondary }]}>Sudoku Premium Version 1.4.0</Text>
         <View style={S.footerLinks}>
           <TouchableOpacity><Text style={[S.footerLink, { color: colors.textSecondary }]}>TERMS</Text></TouchableOpacity>
           <TouchableOpacity><Text style={[S.footerLink, { color: colors.textSecondary }]}>SUPPORT</Text></TouchableOpacity>
@@ -178,35 +175,35 @@ export const SettingsScreen: React.FC = () => {
 };
 
 const S = StyleSheet.create({
-  root:       { flex: 1 },
-  header:     {
+  root: { flex: 1 },
+  header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, height: 56, borderBottomWidth: 1,
   },
-  headerBtn:  { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle:{ fontSize: 18, fontWeight: '700' },
+  headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
 
-  pageTitle:  { fontSize: 28, fontWeight: '800', paddingHorizontal: 16, marginTop: 20, marginBottom: 8 },
+  pageTitle: { fontSize: 28, fontWeight: '800', paddingHorizontal: 16, marginTop: 20, marginBottom: 8 },
   sectionLbl: {
     fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase',
     paddingHorizontal: 16, marginTop: 22, marginBottom: 8,
   },
-  card:       { marginHorizontal: 16, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  card: { marginHorizontal: 16, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
 
-  row:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
-  rowTxt:     { flex: 1, paddingRight: 12 },
-  rowLbl:     { fontSize: 16, fontWeight: '500' },
-  rowSub:     { fontSize: 13, marginTop: 2 },
-  chevron:    { fontSize: 24, fontWeight: '300' },
-  divider:    { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
+  rowTxt: { flex: 1, paddingRight: 12 },
+  rowLbl: { fontSize: 16, fontWeight: '500' },
+  rowSub: { fontSize: 13, marginTop: 2 },
+  chevron: { fontSize: 24, fontWeight: '300' },
+  divider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
 
-  version:    { fontSize: 13, textAlign: 'center', marginTop: 28 },
-  footerLinks:{ flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 6, marginBottom: 24 },
+  version: { fontSize: 13, textAlign: 'center', marginTop: 28 },
+  footerLinks: { flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 6, marginBottom: 24 },
   footerLink: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
 
-  bentoRow:   { flexDirection: 'row', gap: 12, paddingHorizontal: 16, marginBottom: 8 },
-  bentoCard:  { flex: 1, borderRadius: 14, padding: 18 },
-  bentoIco:   { fontSize: 22, marginBottom: 8 },
+  bentoRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, marginBottom: 8 },
+  bentoCard: { flex: 1, borderRadius: 14, padding: 18 },
+  bentoIco: { fontSize: 22, marginBottom: 8 },
   bentoTitle: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
-  bentoCopy:  { fontSize: 12, lineHeight: 17 },
+  bentoCopy: { fontSize: 12, lineHeight: 17 },
 });
