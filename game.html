@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sudoku - Game</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&amp;family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline-variant": "#c4c5d7",
+                      "surface-variant": "#e2e1ed",
+                      "surface": "#fbf8ff",
+                      "on-primary-container": "#fffbff",
+                      "secondary": "#5d5c74",
+                      "inverse-on-surface": "#f1effb",
+                      "background": "#fbf8ff",
+                      "surface-container": "#eeedf8",
+                      "on-primary": "#ffffff",
+                      "primary-fixed-dim": "#b9c3ff",
+                      "on-tertiary-fixed": "#321300",
+                      "tertiary": "#954500",
+                      "on-secondary-container": "#63627a",
+                      "on-tertiary-container": "#fffbff",
+                      "inverse-primary": "#b9c3ff",
+                      "tertiary-fixed-dim": "#ffb68a",
+                      "on-tertiary": "#ffffff",
+                      "surface-bright": "#fbf8ff",
+                      "inverse-surface": "#2f3039",
+                      "on-error-container": "#93000a",
+                      "surface-container-high": "#e8e7f3",
+                      "secondary-container": "#e2e0fc",
+                      "error-container": "#ffdad6",
+                      "surface-dim": "#dad9e4",
+                      "primary": "#2a4dd7",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#e2e0fc",
+                      "tertiary-container": "#bb5800",
+                      "tertiary-fixed": "#ffdbc8",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-tint": "#2d50d9",
+                      "on-secondary-fixed-variant": "#45455b",
+                      "on-primary-fixed-variant": "#0034c0",
+                      "on-surface-variant": "#444654",
+                      "primary-fixed": "#dde1ff",
+                      "surface-container-highest": "#e2e1ed",
+                      "surface-container-low": "#f4f2fe",
+                      "secondary-fixed-dim": "#c6c4df",
+                      "on-primary-fixed": "#001257",
+                      "on-background": "#1a1b23",
+                      "on-secondary": "#ffffff",
+                      "outline": "#747686",
+                      "on-tertiary-fixed-variant": "#743500",
+                      "primary-container": "#4868f1",
+                      "on-surface": "#1a1b23",
+                      "on-secondary-fixed": "#1a1a2e",
+                      "on-error": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "xl": "48px",
+                      "sm": "8px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "board-gutter": "2px",
+                      "md": "16px",
+                      "huge": "80px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "DM Sans"
+                      ],
+                      "meta-sm": [
+                              "DM Sans"
+                      ],
+                      "body-main": [
+                              "DM Sans"
+                      ],
+                      "body-strong": [
+                              "DM Sans"
+                      ],
+                      "number-grid-sm": [
+                              "DM Mono"
+                      ],
+                      "display-lg": [
+                              "DM Sans"
+                      ],
+                      "headline-md": [
+                              "DM Sans"
+                      ],
+                      "number-grid": [
+                              "DM Mono"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "meta-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-main": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-strong": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "number-grid-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "1",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "number-grid": [
+                              "24px",
+                              {
+                                      "lineHeight": "1",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background-color: #E8EAED; /* Hairline borders */
+            border: 2px solid #8892A4;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px 0 rgba(10, 0, 0, 0.05); /* Ambient Lift */
+        }
+        
+        .board-cell {
+            background-color: #FFFFFF;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 3x3 Block borders */
+        .board-cell:nth-child(3n) { border-right: 1.5px solid #8892A4; }
+        .board-cell:nth-child(9n) { border-right: none; }
+        .board-cell:nth-child(n+19):nth-child(-n+27),
+        .board-cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 1.5px solid #8892A4; }
+
+        /* Cell States */
+        .cell-given { background-color: #F4F4F4; font-weight: 600; color: #1a1b23; }
+        .cell-user { color: #4F6EF7; }
+        .cell-selected { background-color: #EEF3FF; border: 2px solid #4F6EF7; z-index: 10; position: relative; }
+        .cell-highlight { background-color: #F5F7FF; }
+        .cell-error { background-color: #ffdad6; color: #ba1a1a; }
+        
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-main antialiased min-h-screen flex flex-col items-center">
+<!-- TopAppBar Container -->
+<div class="h-[56px] w-full bg-background dark:bg-background flex items-center justify-between px-md w-full sticky top-0 z-40">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-headline-md font-headline-md" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="font-headline-md text-headline-md font-bold text-on-surface dark:text-on-surface">
+<span class="px-3 py-1 rounded-full border border-outline-variant text-meta-sm font-meta-sm text-secondary">Expert</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-primary dark:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-headline-md font-headline-md" style="font-variation-settings: 'FILL' 0;">lightbulb</span>
+</button>
+</div>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-[600px] px-md py-lg flex flex-col gap-lg items-center">
+<!-- Stats Row -->
+<div class="w-full flex justify-between items-center px-sm">
+<div class="flex items-center gap-xs text-error font-meta-sm text-meta-sm">
+<span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+<span>2/3</span>
+</div>
+<div class="font-number-grid-sm text-number-grid-sm text-on-surface">
+                12:45
+            </div>
+<div class="flex items-center gap-xs text-secondary font-meta-sm text-meta-sm">
+<span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+<span>Notes Off</span>
+</div>
+</div>
+<!-- The Board -->
+<div class="w-full board-grid font-number-grid text-number-grid">
+<!-- Row 1 -->
+<div class="board-cell cell-given">5</div>
+<div class="board-cell cell-given">3</div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">6</div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">9</div>
+<div class="board-cell cell-given">8</div>
+<div class="board-cell"></div>
+<!-- Row 2 -->
+<div class="board-cell cell-given">7</div>
+<div class="board-cell cell-highlight"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">1</div>
+<div class="board-cell cell-given">9</div>
+<div class="board-cell cell-given">5</div>
+<div class="board-cell"></div>
+<div class="board-cell cell-highlight"></div>
+<div class="board-cell"></div>
+<!-- Row 3 -->
+<div class="board-cell"></div>
+<div class="board-cell cell-given">9</div>
+<div class="board-cell cell-given">8</div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">6</div>
+<div class="board-cell"></div>
+<!-- Row 4 -->
+<div class="board-cell cell-given">8</div>
+<div class="board-cell cell-highlight"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">4</div>
+<div class="board-cell cell-error">2</div>
+<div class="board-cell cell-highlight"></div>
+<div class="board-cell cell-given">7</div>
+<div class="board-cell cell-selected cell-user">2</div>
+<div class="board-cell cell-given">3</div>
+<!-- Row 5 -->
+<div class="board-cell cell-given">4</div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">8</div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">3</div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">1</div>
+<div class="board-cell"></div>
+<!-- Row 6 -->
+<div class="board-cell cell-given">7</div>
+<div class="board-cell cell-highlight"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">2</div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">6</div>
+<div class="board-cell"></div>
+<!-- Row 7 -->
+<div class="board-cell"></div>
+<div class="board-cell cell-given">6</div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">2</div>
+<div class="board-cell cell-given">8</div>
+<div class="board-cell"></div>
+<!-- Row 8 -->
+<div class="board-cell"></div>
+<div class="board-cell cell-highlight"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">4</div>
+<div class="board-cell cell-given">1</div>
+<div class="board-cell cell-given">9</div>
+<div class="board-cell"></div>
+<div class="board-cell cell-highlight"></div>
+<div class="board-cell cell-given">5</div>
+<!-- Row 9 -->
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">8</div>
+<div class="board-cell"></div>
+<div class="board-cell cell-given">1</div>
+<div class="board-cell cell-given">7</div>
+<div class="board-cell cell-given">9</div>
+</div>
+<!-- Controls Area -->
+<div class="w-full flex flex-col gap-md mt-lg">
+<!-- Actions Row -->
+<div class="flex justify-around w-full mb-sm">
+<button class="flex flex-col items-center gap-xs text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined bg-surface-container rounded-full p-2" style="font-variation-settings: 'FILL' 0;">undo</span>
+<span class="font-label-caps text-label-caps">Undo</span>
+</button>
+<button class="flex flex-col items-center gap-xs text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined bg-surface-container rounded-full p-2" style="font-variation-settings: 'FILL' 0;">backspace</span>
+<span class="font-label-caps text-label-caps">Erase</span>
+</button>
+<button class="flex flex-col items-center gap-xs text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined bg-surface-container rounded-full p-2" style="font-variation-settings: 'FILL' 0;">edit</span>
+<span class="font-label-caps text-label-caps">Notes</span>
+</button>
+<button class="flex flex-col items-center gap-xs text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined bg-surface-container rounded-full p-2" style="font-variation-settings: 'FILL' 0;">lightbulb</span>
+<span class="font-label-caps text-label-caps">Hint</span>
+</button>
+</div>
+<!-- Numpad Grid -->
+<div class="grid grid-cols-5 gap-sm w-full">
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">1</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">2</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">3</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">4</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">5</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">6</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">7</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">8</button>
+<button class="bg-surface-container-highest text-on-surface font-number-grid text-number-grid h-12 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors">9</button>
+<button class="bg-transparent border border-outline-variant text-on-surface font-headline-md text-headline-md h-12 rounded-lg hover:bg-surface-container transition-colors material-symbols-outlined">pause</button>
+</div>
+</div>
+</main>
+</body></html>

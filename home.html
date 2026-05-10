@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Sudoku</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c4c5d7",
+                        "surface-variant": "#e2e1ed",
+                        "surface": "#fbf8ff",
+                        "on-primary-container": "#fffbff",
+                        "secondary": "#5d5c74",
+                        "inverse-on-surface": "#f1effb",
+                        "background": "#fbf8ff",
+                        "surface-container": "#eeedf8",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#b9c3ff",
+                        "on-tertiary-fixed": "#321300",
+                        "tertiary": "#954500",
+                        "on-secondary-container": "#63627a",
+                        "on-tertiary-container": "#fffbff",
+                        "inverse-primary": "#b9c3ff",
+                        "tertiary-fixed-dim": "#ffb68a",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#fbf8ff",
+                        "inverse-surface": "#2f3039",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e8e7f3",
+                        "secondary-container": "#e2e0fc",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dad9e4",
+                        "primary": "#2a4dd7",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e2e0fc",
+                        "tertiary-container": "#bb5800",
+                        "tertiary-fixed": "#ffdbc8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#2d50d9",
+                        "on-secondary-fixed-variant": "#45455b",
+                        "on-primary-fixed-variant": "#0034c0",
+                        "on-surface-variant": "#444654",
+                        "primary-fixed": "#dde1ff",
+                        "surface-container-highest": "#e2e1ed",
+                        "surface-container-low": "#f4f2fe",
+                        "secondary-fixed-dim": "#c6c4df",
+                        "on-primary-fixed": "#001257",
+                        "on-background": "#1a1b23",
+                        "on-secondary": "#ffffff",
+                        "outline": "#747686",
+                        "on-tertiary-fixed-variant": "#743500",
+                        "primary-container": "#4868f1",
+                        "on-surface": "#1a1b23",
+                        "on-secondary-fixed": "#1a1a2e",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "xl": "48px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "board-gutter": "2px",
+                        "md": "16px",
+                        "huge": "80px",
+                        "safe": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["DM Sans"],
+                        "meta-sm": ["DM Sans"],
+                        "body-main": ["DM Sans"],
+                        "body-strong": ["DM Sans"],
+                        "number-grid-sm": ["DM Mono"],
+                        "display-lg": ["DM Sans"],
+                        "headline-md": ["DM Sans"],
+                        "number-grid": ["DM Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "meta-sm": ["13px", { "lineHeight": "1.4", "fontWeight": "400" }],
+                        "body-main": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-strong": ["16px", { "lineHeight": "1.6", "fontWeight": "600" }],
+                        "number-grid-sm": ["14px", { "lineHeight": "1", "fontWeight": "500" }],
+                        "display-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "number-grid": ["24px", { "lineHeight": "1", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed pb-[100px] md:pb-0">
+<!-- TopAppBar -->
+<header class="h-[56px] w-full bg-background flex items-center justify-between px-md md:hidden fixed top-0 z-40">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">SUDOKU</h1>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Web Top Nav (Hidden on Mobile) -->
+<header class="hidden md:flex h-[80px] w-full bg-background items-center justify-between px-xl sticky top-0 z-40 border-b border-outline-variant/30">
+<div class="flex items-center gap-lg">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">SUDOKU</h1>
+<nav class="flex items-center gap-sm ml-lg">
+<a class="px-4 py-2 bg-secondary-container text-on-secondary-container font-body-strong rounded-lg flex items-center gap-xs transition-colors" href="#">
+<span class="material-symbols-outlined fill text-[20px]" data-icon="grid_on" data-weight="fill">grid_on</span>
+                    Play
+                </a>
+<a class="px-4 py-2 text-on-surface-variant hover:bg-surface-container font-body-main rounded-lg flex items-center gap-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="history">history</span>
+                    Archive
+                </a>
+<a class="px-4 py-2 text-on-surface-variant hover:bg-surface-container font-body-main rounded-lg flex items-center gap-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="leaderboard">leaderboard</span>
+                    Statistics
+                </a>
+</nav>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="flex-1 w-full max-w-4xl mx-auto px-md md:px-xl pt-[80px] md:pt-xl pb-huge flex flex-col items-center">
+<!-- Hero Title -->
+<div class="text-center mb-xl w-full max-w-md mt-lg md:mt-0">
+<h2 class="font-display-lg text-display-lg text-on-background mb-xs">No ads. No noise.</h2>
+<p class="font-body-main text-body-main text-on-surface-variant">Just the puzzle.</p>
+</div>
+<!-- Continue Game Banner -->
+<div class="w-full max-w-2xl bg-secondary-container/50 border border-secondary-fixed-dim rounded-xl p-md mb-xl flex flex-col sm:flex-row items-center justify-between gap-md cursor-pointer hover:bg-secondary-container/70 transition-colors shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<div class="flex items-center gap-md w-full sm:w-auto">
+<div class="w-12 h-12 bg-surface rounded-lg border border-outline-variant flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary" data-icon="resume">play_arrow</span>
+</div>
+<div>
+<h3 class="font-body-strong text-body-strong text-on-surface">Continue Game</h3>
+<div class="flex items-center gap-sm mt-1">
+<span class="font-meta-sm text-meta-sm text-secondary">Hard</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="font-meta-sm text-meta-sm text-secondary">14:23</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="font-meta-sm text-meta-sm text-secondary">42% complete</span>
+</div>
+</div>
+</div>
+<button class="w-full sm:w-auto px-lg py-sm bg-primary text-on-primary font-body-strong rounded-xl hover:bg-primary-container active:scale-95 transition-all duration-200">
+                Resume
+            </button>
+</div>
+<!-- Stats Strip -->
+<div class="w-full max-w-2xl grid grid-cols-3 gap-md mb-xl">
+<div class="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<span class="material-symbols-outlined text-outline mb-xs" data-icon="timer">timer</span>
+<span class="font-number-grid text-number-grid text-on-surface mb-xs">03:42</span>
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">Best Time</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<span class="material-symbols-outlined text-outline mb-xs" data-icon="local_fire_department">local_fire_department</span>
+<span class="font-number-grid text-number-grid text-on-surface mb-xs">12</span>
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">Day Streak</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<span class="material-symbols-outlined text-outline mb-xs" data-icon="done_all">done_all</span>
+<span class="font-number-grid text-number-grid text-on-surface mb-xs">148</span>
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">Completed</span>
+</div>
+</div>
+<!-- Difficulty Selector -->
+<div class="w-full max-w-2xl">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-md ml-sm">Choose Difficulty</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+<!-- Easy Card -->
+<button class="bg-surface border border-outline-variant rounded-xl p-lg text-left hover:border-primary hover:bg-surface-container-low active:scale-[0.98] transition-all duration-200 group relative overflow-hidden shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<div class="flex justify-between items-start mb-md">
+<h4 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Easy</h4>
+<span class="px-2 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-label-caps text-label-caps rounded-md">1-3 Mins</span>
+</div>
+<p class="font-meta-sm text-meta-sm text-on-surface-variant">Perfect for a quick mental stretch. Lots of given numbers.</p>
+</button>
+<!-- Medium Card -->
+<button class="bg-surface border border-outline-variant rounded-xl p-lg text-left hover:border-primary hover:bg-surface-container-low active:scale-[0.98] transition-all duration-200 group relative overflow-hidden shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<div class="flex justify-between items-start mb-md">
+<h4 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Medium</h4>
+<span class="px-2 py-1 bg-primary-fixed text-on-primary-fixed-variant font-label-caps text-label-caps rounded-md">5-10 Mins</span>
+</div>
+<p class="font-meta-sm text-meta-sm text-on-surface-variant">A balanced challenge. Requires basic logic techniques.</p>
+</button>
+<!-- Hard Card -->
+<button class="bg-surface border border-outline-variant rounded-xl p-lg text-left hover:border-primary hover:bg-surface-container-low active:scale-[0.98] transition-all duration-200 group relative overflow-hidden shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<div class="flex justify-between items-start mb-md">
+<h4 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Hard</h4>
+<span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-caps text-label-caps rounded-md">15+ Mins</span>
+</div>
+<p class="font-meta-sm text-meta-sm text-on-surface-variant">Requires strategy. Advanced patterns like X-Wing needed.</p>
+</button>
+<!-- Expert Card -->
+<button class="bg-surface border border-outline-variant rounded-xl p-lg text-left hover:border-primary hover:bg-surface-container-low active:scale-[0.98] transition-all duration-200 group relative overflow-hidden shadow-[0_4px_20px_0_rgba(10,0,0,0.02)]">
+<div class="flex justify-between items-start mb-md">
+<h4 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Expert</h4>
+<span class="px-2 py-1 bg-error-container text-on-error-container font-label-caps text-label-caps rounded-md">30+ Mins</span>
+</div>
+<p class="font-meta-sm text-meta-sm text-on-surface-variant">Diabolical difficulty. Only for true Sudoku masters.</p>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-surface pb-safe border-t border-outline-variant md:hidden z-50 h-[80px] shadow-[0_-4px_20px_0_rgba(10,0,0,0.05)]">
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-4 py-1 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined fill text-[24px] mb-1" data-icon="grid_on" data-weight="fill">grid_on</span>
+<span class="font-label-caps text-label-caps">Play</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary px-4 py-1 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps">Archive</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary px-4 py-1 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-caps text-label-caps">Statistics</span>
+</a>
+</nav>
+</body></html>
