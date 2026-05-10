@@ -156,60 +156,36 @@ export const useStore = create<GameStore>()(
         const { settings } = get();
         const snapshot = createSnapshot(state);
         
+        // ── Notes mode ────────────────────────────────────────────────────────
         if (state.notesMode) {
           const notes = cell.notes ? [...cell.notes] : [];
           const noteIndex = notes.indexOf(number);
-          if (noteIndex >= 0) {
-            notes.splice(noteIndex, 1);
-          } else {
-            notes.push(number);
-          }
+          if (noteIndex >= 0) notes.splice(noteIndex, 1);
+          else notes.push(number);
           
           const updatedCells = [...state.cells];
           updatedCells[state.selectedCellIndex] = {
             ...cell,
             notes: notes.length > 0 ? notes : null,
           };
-          
           set({ cells: updatedCells, moveHistory: [...(state.moveHistory ?? []), snapshot] });
-          if (settings.hapticFeedback) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
+          if (settings.hapticFeedback) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           return;
         }
         
+        // ── Normal mode ───────────────────────────────────────────────────────
+        // Correctness is ALWAYS checked — showMistakes only controls visual display
         const isCorrect = state.solution[cell.row * 9 + cell.col] === number;
         const updatedCells = [...state.cells];
         const cellIndex = state.selectedCellIndex;
-        
-        if (!isCorrect && settings.showMistakes) {
-          updatedCells[cellIndex] = { ...cell, value: number, isError: true };
-          const newMistakes = state.mistakes + 1;
-          set({
-            cells: updatedCells,
-            mistakes: newMistakes,
-            moveHistory: [...(state.moveHistory ?? []), snapshot],
-          });
-          
-          if (settings.hapticFeedback) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          }
-          
-          if (settings.mistakeLimit > 0 && newMistakes >= settings.mistakeLimit) {
-            set({ isPaused: true, isCompleted: true, isFailed: true });
-            get().updateStats({
-              date: new Date(),
-              difficulty: state.difficulty,
-              durationSeconds: state.elapsedSeconds,
-              mistakes: newMistakes,
-              won: false,
-            });
-          }
-        } else {
-          updatedCells[cellIndex] = { ...cell, value: number, isError: false };
-          
+        const pts = POINTS_PER_CELL[state.difficulty] ?? 10;
+
+        // Mark the error internally; getCellBg uses showMistakes to decide whether to show it
+        updatedCells[cellIndex] = { ...cell, value: number, isError: !isCorrect };
+
+        if (isCorrect) {
+          // ── Correct entry ──────────────────────────────────────────────────
           if (settings.autoRemoveNotes) {
-            // Only clear notes in cells that share a row, column, or 3x3 box.
             const affectedIndices = new Set(
               SudokuValidator.getRelatedCellsIndices(cell.row, cell.col)
             );
@@ -221,25 +197,44 @@ export const useStore = create<GameStore>()(
               }
             }
           }
-          
-          const pts = POINTS_PER_CELL[state.difficulty] ?? 10;
-          set({ cells: updatedCells, moveHistory: [...(state.moveHistory ?? []), snapshot], livePoints: (state.livePoints ?? 0) + pts });
-          
-          if (settings.hapticFeedback) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
-          
-          if (updatedCells.every((updatedCell, index) => updatedCell.value === state.solution[index])) {
+
+          set({
+            cells: updatedCells,
+            moveHistory: [...(state.moveHistory ?? []), snapshot],
+            livePoints: (state.livePoints ?? 0) + pts,
+          });
+          if (settings.hapticFeedback) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+          // Check puzzle completion
+          if (updatedCells.every((c, i) => c.value === state.solution[i])) {
             set({ isPaused: true, isCompleted: true });
-            if (settings.hapticFeedback) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            }
+            if (settings.hapticFeedback) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
             get().updateStats({
               date: new Date(),
               difficulty: state.difficulty,
               durationSeconds: state.elapsedSeconds,
               mistakes: state.mistakes,
               won: true,
+            });
+          }
+        } else {
+          // ── Incorrect entry ────────────────────────────────────────────────
+          const newMistakes = state.mistakes + 1;
+          set({
+            cells: updatedCells,
+            mistakes: newMistakes,
+            moveHistory: [...(state.moveHistory ?? []), snapshot],
+          });
+          if (settings.hapticFeedback) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+          if (settings.mistakeLimit > 0 && newMistakes >= settings.mistakeLimit) {
+            set({ isPaused: true, isCompleted: true, isFailed: true });
+            get().updateStats({
+              date: new Date(),
+              difficulty: state.difficulty,
+              durationSeconds: state.elapsedSeconds,
+              mistakes: newMistakes,
+              won: false,
             });
           }
         }
@@ -304,19 +299,38 @@ export const useStore = create<GameStore>()(
         const cell = state.cells[state.selectedCellIndex];
         if (cell.isGiven || cell.value !== null) return;
         
-        // Use the stored solution to give the definitive correct answer
         const correctNumber = state.solution[cell.row * 9 + cell.col];
         if (!correctNumber) return;
+
         const updatedCells = [...state.cells];
         updatedCells[state.selectedCellIndex] = {
           ...cell,
           value: correctNumber,
+          notes: null,
           isError: false,
         };
+
+        // Auto-remove this number from notes in related cells
+        if (settings.autoRemoveNotes) {
+          const affectedIndices = new Set(
+            SudokuValidator.getRelatedCellsIndices(cell.row, cell.col)
+          );
+          for (const i of affectedIndices) {
+            const c = updatedCells[i];
+            if (!c.isGiven && c.value === null && c.notes?.includes(correctNumber)) {
+              const newNotes = c.notes.filter((n) => n !== correctNumber);
+              updatedCells[i] = { ...c, notes: newNotes.length > 0 ? newNotes : null };
+            }
+          }
+        }
+
+        // Half points for a hint (assisted solve)
+        const pts = Math.floor((POINTS_PER_CELL[state.difficulty] ?? 10) / 2);
         
         set({
           cells: updatedCells,
           hintsUsed: state.hintsUsed + 1,
+          livePoints: (state.livePoints ?? 0) + pts,
           moveHistory: [...(state.moveHistory ?? []), createSnapshot(state)],
         });
         
@@ -324,7 +338,8 @@ export const useStore = create<GameStore>()(
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
         
-        if (updatedCells.every((updatedCell, index) => updatedCell.value === state.solution[index])) {
+        // Check puzzle completion after hint
+        if (updatedCells.every((c, i) => c.value === state.solution[i])) {
           set({ isPaused: true, isCompleted: true });
           if (settings.hapticFeedback) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
