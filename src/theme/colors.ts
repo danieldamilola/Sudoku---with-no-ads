@@ -1,93 +1,93 @@
-// ─── Sudoku App Color Palette (matches reference design) ──────────────────────
+// ─── Sudoku App Color Palette (matches desktop design) ──────────────────────
 export const lightColors = {
   // Page & Surface
-  bgPage:                     '#f5f2ee',  // warm off-white background
+  bgPage:                     '#fcf8fb',
   bgSurface:                  '#ffffff',
-  bgSurfaceDim:               '#e8e4e0',
+  bgSurfaceDim:               '#f6f3f5',
   bgSurfaceBright:            '#ffffff',
   bgSurfaceContainerLowest:   '#ffffff',
-  bgSurfaceContainerLow:      '#f5f2ee',
-  bgSurfaceContainer:         '#ece9e5',
-  bgSurfaceContainerHigh:     '#e3e0dc',
-  bgSurfaceContainerHighest:  '#d9d6d2',
-  bgSurfaceVariant:           '#e3e0dc',
+  bgSurfaceContainerLow:      '#fcf8fb',
+  bgSurfaceContainer:         '#f0edef',
+  bgSurfaceContainerHigh:     '#f6f3f5',
+  bgSurfaceContainerHighest:  '#e4e2e4',
+  bgSurfaceVariant:           '#f0edef',
 
   // Text
-  textPrimary:                '#1a1a1a',
-  textSecondary:              '#6b7280',
-  textOnSurface:              '#1a1a1a',
-  textOnSurfaceVariant:       '#6b7280',
+  textPrimary:                '#1b1b1d',
+  textSecondary:              '#444654',
+  textOnSurface:              '#1b1b1d',
+  textOnSurfaceVariant:       '#444654',
 
-  // Primary – Indigo Blue (buttons, selected, action)
-  primary:                    '#3b5bdb',
+  // Primary – Indigo Blue
+  primary:                    '#274ed5',
   onPrimary:                  '#ffffff',
-  primaryContainer:           '#4c6ef5',
+  primaryContainer:           '#4669f0',
   onPrimaryContainer:         '#ffffff',
-  primaryFixed:               '#e0e7ff',
+  primaryFixed:               '#dce3ff',
   primaryFixedDim:            '#c5d0ff',
   onPrimaryFixed:             '#1a3299',
   onPrimaryFixedVariant:      '#2b47c9',
   inversePrimary:             '#c5d0ff',
 
-  // Secondary – Green (streak, success)
-  secondary:                  '#2f9e44',
+  // Secondary – Green
+  secondary:                  '#34c759',
   onSecondary:                '#ffffff',
-  secondaryContainer:         '#d3f9d8',
-  onSecondaryContainer:       '#1e6f30',
-  secondaryFixed:             '#d3f9d8',
+  secondaryContainer:         '#d1fae5',
+  onSecondaryContainer:       '#137333',
+  secondaryFixed:             '#d1fae5',
   secondaryFixedDim:          '#8ce99a',
   onSecondaryFixed:           '#0a3d1a',
   onSecondaryFixedVariant:    '#1e6f30',
 
-  // Tertiary – Amber (hard/warning)
-  tertiary:                   '#e67700',
+  // Tertiary – Amber
+  tertiary:                   '#845000',
   onTertiary:                 '#ffffff',
-  tertiaryContainer:          '#fff3cd',
+  tertiaryContainer:          '#ffddbb',
   onTertiaryContainer:        '#7d4000',
-  tertiaryFixed:              '#fff3cd',
+  tertiaryFixed:              '#ffddbb',
   tertiaryFixedDim:           '#ffd43b',
   onTertiaryFixed:            '#4a2400',
   onTertiaryFixedVariant:     '#7d4000',
 
   // Error
-  error:                      '#c92a2a',
+  error:                      '#ba1a1a',
   onError:                    '#ffffff',
-  errorContainer:             '#ffe3e3',
+  errorContainer:             '#ffdad6',
   onErrorContainer:           '#8b0000',
 
   // Borders
-  outline:                    '#adb5bd',
-  outlineVariant:             '#dee2e6',
-  border:                     '#dee2e6',
-  borderCell:                 '#dee2e6',
+  outline:                    '#c4c5d7',
+  outlineVariant:             '#dcd9dc',
+  border:                     '#dcd9dc',
+  borderCell:                 '#dcd9dc',
   borderBox:                  '#1a1a1a',
   borderBoard:                '#1a1a1a',
 
   // Surface Tint
-  surfaceTint:                '#3b5bdb',
+  surfaceTint:                '#274ed5',
 
   // Inverse
-  inverseSurface:             '#2e2e2e',
-  inverseOnSurface:           '#f5f2ee',
+  inverseSurface:             '#303032',
+  inverseOnSurface:           '#fcf8fb',
 
   // Cell States
   bgCellDefault:              '#ffffff',
-  bgCellGiven:                '#f5f2ee',
-  bgCellSelected:             '#dbe4ff',
+  bgCellGiven:                '#f3f4f6',
+  bgCellSelected:             '#dbeafe',
   bgCellHighlight:            '#f0f2ff',
-  bgCellError:                '#ffe3e3',
-  bgCellSameNumber:           '#e0e7ff',
+  bgCellError:                '#ffdad6',
+  bgCellSameNumber:           '#dce3ff',
 
   // Text States
   textGiven:                  '#1a1a1a',
-  textInput:                  '#3b5bdb',
-  textError:                  '#c92a2a',
+  textInput:                  '#274ed5',
+  textError:                  '#ba1a1a',
 
   // Aliases
-  accent:                     '#3b5bdb',
-  accentDim:                  '#e0e7ff',
-  success:                    '#2f9e44',
-  warning:                    '#e67700',
+  accent:                     '#274ed5',
+  accentDim:                  '#dce3ff',
+  success:                    '#34c759',
+  warning:                    '#845000',
 };
 
 export const darkColors = {
@@ -95,17 +95,17 @@ export const darkColors = {
   bgSurface:                  '#101011',
   bgSurfaceDim:               '#151516',
   bgSurfaceBright:            '#1d1d1f',
-  bgSurfaceContainerLowest:   '#0b0b0c',
+  bgSurfaceContainerLowest:   '#050505',
   bgSurfaceContainerLow:      '#101011',
-  bgSurfaceContainer:         '#18181a',
+  bgSurfaceContainer:         '#1d1d1f',
   bgSurfaceContainerHigh:     '#202024',
   bgSurfaceContainerHighest:  '#29292c',
   bgSurfaceVariant:           '#343438',
 
   textPrimary:                '#f5f5f0',
-  textSecondary:              '#b9b9c0',
+  textSecondary:              '#c8c8ce',
   textOnSurface:              '#f5f5f0',
-  textOnSurfaceVariant:       '#b9b9c0',
+  textOnSurfaceVariant:       '#c8c8ce',
 
   primary:                    '#9db6ff',
   onPrimary:                  '#050505',
@@ -115,36 +115,36 @@ export const darkColors = {
   primaryFixedDim:            '#23356f',
   onPrimaryFixed:             '#1a3299',
   onPrimaryFixedVariant:      '#9db6ff',
-  inversePrimary:             '#3b5bdb',
+  inversePrimary:             '#274ed5',
 
-  secondary:                  '#69db7c',
+  secondary:                  '#5ee577',
   onSecondary:                '#0a3d1a',
-  secondaryContainer:         '#1e6f30',
-  onSecondaryContainer:       '#d3f9d8',
-  secondaryFixed:             '#d3f9d8',
+  secondaryContainer:         '#137333',
+  onSecondaryContainer:       '#d1fae5',
+  secondaryFixed:             '#d1fae5',
   secondaryFixedDim:          '#8ce99a',
   onSecondaryFixed:           '#0a3d1a',
-  onSecondaryFixedVariant:    '#1e6f30',
+  onSecondaryFixedVariant:    '#137333',
 
-  tertiary:                   '#ffd43b',
-  onTertiary:                 '#4a2400',
+  tertiary:                   '#ffc779',
+  onTertiary:                 '#7d4000',
   tertiaryContainer:          '#7d4000',
-  onTertiaryContainer:        '#fff3cd',
-  tertiaryFixed:              '#fff3cd',
+  onTertiaryContainer:        '#ffddbb',
+  tertiaryFixed:              '#ffddbb',
   tertiaryFixedDim:           '#ffd43b',
   onTertiaryFixed:            '#4a2400',
   onTertiaryFixedVariant:     '#7d4000',
 
-  error:                      '#ff6b6b',
+  error:                      '#ff7b7b',
   onError:                    '#4a0000',
-  errorContainer:             '#8b0000',
-  onErrorContainer:           '#ffe3e3',
+  errorContainer:             '#3a1214',
+  onErrorContainer:           '#ffdad6',
 
-  outline:                    '#6f6f78',
+  outline:                    '#8e8e96',
   outlineVariant:             '#343438',
-  border:                     '#343438',
+  border:                     '#29292c',
   borderCell:                 '#29292c',
-  borderBox:                  '#3a3a3d',
+  borderBox:                  '#58585a',
   borderBoard:                '#3a3a3d',
 
   surfaceTint:                '#748ffc',
@@ -152,21 +152,21 @@ export const darkColors = {
   inverseSurface:             '#f5f5f0',
   inverseOnSurface:           '#050505',
 
-  bgCellDefault:              '#050505',
+  bgCellDefault:              '#0a0a0b',
   bgCellGiven:                '#101011',
   bgCellSelected:             '#2f57f0',
-  bgCellHighlight:            '#11182e',
-  bgCellError:                '#4a0000',
-  bgCellSameNumber:           '#192453',
+  bgCellHighlight:            '#0c1020',
+  bgCellError:                '#3a1214',
+  bgCellSameNumber:           '#141d3f',
 
   textGiven:                  '#f5f5f0',
   textInput:                  '#9db6ff',
-  textError:                  '#ff6b6b',
+  textError:                  '#ff7b7b',
 
   accent:                     '#9db6ff',
   accentDim:                  '#17224b',
-  success:                    '#69db7c',
-  warning:                    '#ffd43b',
+  success:                    '#5ee577',
+  warning:                    '#ffc779',
 };
 
 export const Colors = {
@@ -192,13 +192,13 @@ export const Colors = {
   borderBox:        lightColors.borderBox,
   borderBoard:      lightColors.borderBoard,
 
-  // Difficulty colors matching reference design
-  easyColor:        '#2f9e44',
-  easyBg:           '#d3f9d8',
-  mediumColor:      '#3b5bdb',
-  mediumBg:         '#dbe4ff',
-  hardColor:        '#e67700',
-  hardBg:           '#fff3cd',
-  expertColor:      '#c92a2a',
-  expertBg:         '#ffe3e3',
+  // Difficulty colors matching desktop design
+  easyColor:        '#34c759',
+  easyBg:           '#d1fae5',
+  mediumColor:      '#274ed5',
+  mediumBg:         '#dbeafe',
+  hardColor:        '#845000',
+  hardBg:           '#ffddbb',
+  expertColor:      '#ba1a1a',
+  expertBg:         '#ffdad6',
 } as const;
