@@ -43,6 +43,29 @@ const Div: React.FC<{ colors: C }> = ({ colors }) => (
   <View style={[S.divider, { backgroundColor: colors.outlineVariant }]} />
 );
 
+const ThemeSegment: React.FC<{ value: boolean; onChange: (value: boolean) => void; colors: C }> =
+  ({ value, onChange, colors }) => (
+    <View style={[S.segment, { backgroundColor: colors.bgSurfaceContainer }]}>
+      {[
+        { label: 'Light', value: false },
+        { label: 'Dark', value: true },
+      ].map((item) => {
+        const active = value === item.value;
+        return (
+          <TouchableOpacity
+            key={item.label}
+            style={[S.segmentBtn, active && { backgroundColor: colors.bgSurfaceContainerLowest }]}
+            onPress={() => onChange(item.value)}
+            activeOpacity={0.75}
+          >
+            <Text style={[S.segmentText, { color: active ? colors.textPrimary : colors.textSecondary }]}>
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 export const SettingsScreen: React.FC = () => {
@@ -70,15 +93,13 @@ export const SettingsScreen: React.FC = () => {
         {/* ── APPEARANCE ── */}
         <Text style={[S.sectionLbl, { color: colors.textSecondary }]}>APPEARANCE</Text>
         <View style={[S.card, { backgroundColor: colors.bgSurfaceContainerLowest, borderColor: colors.outlineVariant }]}>
-          <ChevronRow
-            label="Theme" sub="System default" colors={colors}
-            onPress={() => Alert.alert('Theme', 'Light and dark theme options coming in a future update.')}
-          />
-          <Div colors={colors} />
-          <ChevronRow
-            label="Board Style" sub="Classic Ink" colors={colors}
-            onPress={() => Alert.alert('Board Style', 'Additional board styles coming in a future update.')}
-          />
+          <View style={S.row}>
+            <View style={S.rowTxt}>
+              <Text style={[S.rowLbl, { color: colors.textPrimary }]}>Color Theme</Text>
+              <Text style={[S.rowSub, { color: colors.textSecondary }]}>Match the quiet ink design.</Text>
+            </View>
+            <ThemeSegment value={settings.darkMode} onChange={(v) => set('darkMode', v)} colors={colors} />
+          </View>
         </View>
 
         {/* ── GAMEPLAY ── */}
@@ -150,25 +171,7 @@ export const SettingsScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* ── Footer ── */}
-        <Text style={[S.version, { color: colors.textSecondary }]}>Sudoku Premium Version 1.4.0</Text>
-        <View style={S.footerLinks}>
-          <TouchableOpacity><Text style={[S.footerLink, { color: colors.textSecondary }]}>TERMS</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={[S.footerLink, { color: colors.textSecondary }]}>SUPPORT</Text></TouchableOpacity>
-        </View>
-
-        {/* ── Bento promo cards ── */}
-        <View style={S.bentoRow}>
-          <View style={[S.bentoCard, { backgroundColor: '#d3f9d8' }]}>
-            <Text style={S.bentoIco}>✦✦</Text>
-            <Text style={[S.bentoTitle, { color: '#2f9e44' }]}>Brain Training</Text>
-            <Text style={[S.bentoCopy, { color: '#1e6f30' }]}>Settings optimized for cognitive focus.</Text>
-          </View>
-          <View style={[S.bentoCard, { backgroundColor: '#fff3cd' }]}>
-            <Text style={S.bentoIco}>🏆</Text>
-            <Text style={[S.bentoTitle, { color: '#e67700' }]}>Premium Quality</Text>
-          </View>
-        </View>
+        <Text style={[S.version, { color: colors.textSecondary }]}>Sudoku 1.4.0</Text>
       </ScrollView>
     </View>
   );
@@ -196,14 +199,9 @@ const S = StyleSheet.create({
   rowSub: { fontSize: 13, marginTop: 2 },
   chevron: { fontSize: 24, fontWeight: '300' },
   divider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
+  segment: { flexDirection: 'row', borderRadius: 8, padding: 3 },
+  segmentBtn: { minWidth: 64, height: 34, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  segmentText: { fontSize: 13, fontWeight: '800' },
 
   version: { fontSize: 13, textAlign: 'center', marginTop: 28 },
-  footerLinks: { flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 6, marginBottom: 24 },
-  footerLink: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
-
-  bentoRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, marginBottom: 8 },
-  bentoCard: { flex: 1, borderRadius: 14, padding: 18 },
-  bentoIco: { fontSize: 22, marginBottom: 8 },
-  bentoTitle: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
-  bentoCopy: { fontSize: 12, lineHeight: 17 },
 });

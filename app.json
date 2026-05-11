@@ -25,7 +25,14 @@
       "package": "com.anonymous.sudoku_app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single",
+      "name": "Sudoku",
+      "lang": "en",
+      "description": "Sudoku — No ads. No noise. Just the puzzle.",
+      "themeColor": "#f5f0e8",
+      "backgroundColor": "#f5f0e8"
     }
   }
 }

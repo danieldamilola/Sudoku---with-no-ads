@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Sudoku",
+  "version": "1.0.0",
+  "identifier": "com.danieldamilola.sudoku",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Sudoku",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 1000,
+        "minHeight": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "transparent": false,
+        "backgroundColor": "#fcf8fb"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "Daniel Damilola",
+    "copyright": "© 2025 Daniel Damilola",
+    "shortDescription": "Sudoku — No ads. No noise. Just the puzzle.",
+    "longDescription": "A clean, minimal Sudoku desktop app with no ads, hints, notes, and multiple difficulty levels.",
+    "icon": []
+  }
+}

@@ -5,12 +5,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Hash, BarChart3, Settings, ChevronRight } from 'lucide-react-native';
+import { BarChart3, Settings, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useStore } from '../store/useStore';
 import { Difficulty, SudokuCell } from '../types';
 import { formatTime } from '../utils/time';
 import { BottomTabBar } from '../components/BottomTabBar';
+import { BrandMark } from '../components/BrandMark';
 
 // ─── Difficulty metadata ────────────────────────────────────────────────────
 const DIFF: Record<Difficulty, {
@@ -100,8 +101,7 @@ export const HomeScreen: React.FC = () => {
     <View style={[S.root, { backgroundColor: colors.bgPage, paddingTop: insets.top }]}>
       {/* ── Top bar ── */}
       <View style={S.topBar}>
-        {/* Hash = sudoku grid brand logo */}
-        <Hash size={26} color={colors.textPrimary} strokeWidth={2} />
+        <BrandMark size={30} color={colors.textPrimary} />
         <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
           <TouchableOpacity onPress={() => navigation.navigate('Statistics' as never)} style={S.topIconBtn}>
             <BarChart3 size={22} color={colors.textPrimary} strokeWidth={1.8} />
