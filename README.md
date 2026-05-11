@@ -204,7 +204,7 @@ See `DESIGN.md` for detailed design specifications.
 
 ## License
 
-This project is private and proprietary.
+This project is 
 
 ## Credits
 
