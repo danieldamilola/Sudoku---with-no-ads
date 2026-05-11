@@ -74,9 +74,9 @@ export const lightColors = {
   bgCellDefault:              '#ffffff',
   bgCellGiven:                '#ffffff',
   bgCellSelected:             '#4669f0',
-  bgCellHighlight:            '#dfe5ff',
+  bgCellHighlight:            '#dce3ff',
   bgCellError:                '#ffdad6',
-  bgCellSameNumber:           '#ccd6ff',
+  bgCellSameNumber:           '#c2d0fb',
 
   // Text States
   textGiven:                  '#1b1b1d',
@@ -155,9 +155,9 @@ export const darkColors = {
   bgCellDefault:              '#111111',
   bgCellGiven:                '#111111',
   bgCellSelected:             '#5b7eff',
-  bgCellHighlight:            '#1a1a1a',
+  bgCellHighlight:            '#171f42',
   bgCellError:                '#3a1214',
-  bgCellSameNumber:           '#202020',
+  bgCellSameNumber:           '#1e2d5c',
 
   textGiven:                  '#f2f2f2',
   textInput:                  '#a0b4ff',

@@ -22,7 +22,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.sudoku_app"
+      "package": "com.danieldamilola.sudoku"
     },
     "web": {
       "favicon": "./assets/favicon.png",
