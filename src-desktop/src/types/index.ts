@@ -1,4 +1,4 @@
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
+export type Difficulty = 'beginner' | 'skill' | 'hard' | 'advanced' | 'expert' | 'master';
 
 export interface SudokuCell {
   row: number;
@@ -46,6 +46,8 @@ export interface GameSettings {
   hintsPerGame: number;
   hapticFeedback: boolean;
   soundEffects: boolean;
+  unlockedDifficulties: Difficulty[];
+  zoomLevel: number;
 }
 
 export interface GameStats {

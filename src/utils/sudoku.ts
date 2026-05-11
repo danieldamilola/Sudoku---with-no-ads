@@ -144,10 +144,12 @@ export class SudokuGenerator {
 
   private static getGivenCells(difficulty: Difficulty): number {
     switch (difficulty) {
-      case Difficulty.Easy: return 40;
-      case Difficulty.Medium: return 32;
-      case Difficulty.Hard: return 26;
-      case Difficulty.Expert: return 20;
+      case Difficulty.Beginner: return 45;
+      case Difficulty.Skill: return 40;
+      case Difficulty.Hard: return 32;
+      case Difficulty.Advanced: return 26;
+      case Difficulty.Expert: return 22;
+      case Difficulty.Master: return 18;
     }
   }
 }

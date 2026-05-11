@@ -13,15 +13,17 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // ─── Difficulty config ────────────────────────────────────────────────────────
 const DIFF_CFG: Record<string, { barColor: string; iconBg: string; iconColor: string }> = {
-  easy:   { barColor: '#2f9e44', iconBg: '#d3f9d8', iconColor: '#2f9e44' },
-  medium: { barColor: '#3b5bdb', iconBg: '#dbe4ff', iconColor: '#3b5bdb' },
-  hard:   { barColor: '#e67700', iconBg: '#fff3cd', iconColor: '#e67700' },
-  expert: { barColor: '#c92a2a', iconBg: '#ffe3e3', iconColor: '#c92a2a' },
+  beginner: { barColor: '#34c759', iconBg: '#d1fae5', iconColor: '#34c759' },
+  skill:    { barColor: '#274ed5', iconBg: '#dbeafe', iconColor: '#274ed5' },
+  hard:     { barColor: '#845000', iconBg: '#ffddbb', iconColor: '#845000' },
+  advanced: { barColor: '#ba1a1a', iconBg: '#ffdad6', iconColor: '#ba1a1a' },
+  expert:   { barColor: '#ba1a1a', iconBg: '#ffdad6', iconColor: '#ba1a1a' },
+  master:   { barColor: '#7c3aed', iconBg: '#ede9fe', iconColor: '#7c3aed' },
 };
 
 const calcPoints = (game: GameRecord) => {
   if (!game.won) return 0;
-  const mult = { easy: 1, medium: 2, hard: 3, expert: 4 }[game.difficulty] ?? 1;
+  const mult = { beginner: 1, skill: 2, hard: 3, advanced: 4, expert: 5, master: 6 }[game.difficulty] ?? 1;
   return (100 + (game.mistakes === 0 ? 50 : 0)) * mult;
 };
 
@@ -48,7 +50,7 @@ export const StatisticsScreen: React.FC = () => {
     } catch (_) {}
   };
 
-  const DIFFS = [Difficulty.Easy, Difficulty.Medium, Difficulty.Hard, Difficulty.Expert] as const;
+  const DIFFS = [Difficulty.Beginner, Difficulty.Skill, Difficulty.Hard, Difficulty.Advanced, Difficulty.Expert, Difficulty.Master] as const;
 
   return (
     <View style={[S.root, { backgroundColor: colors.bgPage, paddingTop: insets.top }]}>
@@ -132,7 +134,7 @@ export const StatisticsScreen: React.FC = () => {
           ) : (
             stats.recentGames.slice(0, 6).map((g, idx) => {
               const pts       = calcPoints(g);
-              const cfg       = DIFF_CFG[g.difficulty] ?? DIFF_CFG.easy;
+              const cfg       = DIFF_CFG[g.difficulty] ?? DIFF_CFG.beginner;
               const ptsColor  = g.won ? '#2f9e44' : '#c92a2a';
               const date      = new Date(g.date).toLocaleDateString('en', { month: 'short', day: 'numeric' });
               const time      = g.won ? formatTime(g.durationSeconds) : 'Failed';

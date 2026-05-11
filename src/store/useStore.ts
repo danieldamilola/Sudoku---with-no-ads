@@ -17,6 +17,7 @@ const defaultSettings: GameSettings = {
   hintsPerGame: 3,
   hapticFeedback: true,
   soundEffects: false,
+  unlockedDifficulties: [Difficulty.Beginner, Difficulty.Skill],
 };
 
 const defaultStats: GameStats = {
@@ -45,7 +46,12 @@ const createSnapshot = (state: GameState): GameSnapshot => ({
 
 const MAX_SECOND_CHANCES = 3;
 const POINTS_PER_CELL: Record<string, number> = {
-  easy: 10, medium: 20, hard: 30, expert: 50,
+  beginner: 5,
+  skill: 10,
+  hard: 20,
+  advanced: 30,
+  expert: 50,
+  master: 75,
 };
 
 interface GameStore extends GameState {
@@ -101,7 +107,7 @@ export const useStore = create<GameStore>()(
     (set, get) => ({
       cells: [] as SudokuCell[],
       solution: [] as number[],
-      difficulty: Difficulty.Easy,
+      difficulty: Difficulty.Beginner,
       elapsedSeconds: 0,
       mistakes: 0,
       hintsUsed: 0,
@@ -408,6 +414,7 @@ export const useStore = create<GameStore>()(
       updateStats: (record: GameRecord) => {
         set((state) => {
           const stats = { ...state.stats };
+          const settings = { ...state.settings };
           
           if (record.won) {
             stats.totalCompleted += 1;
@@ -421,6 +428,23 @@ export const useStore = create<GameStore>()(
             if (!currentBest || record.durationSeconds < currentBest) {
               stats.bestTimes[diffName] = record.durationSeconds;
             }
+
+            // Unlock logic
+            const winsForDifficulty = stats.recentGames.filter(g => g.difficulty === record.difficulty && g.won).length + 1;
+            const unlocked = new Set(settings.unlockedDifficulties);
+
+            if (record.difficulty === Difficulty.Skill && winsForDifficulty >= 4 && !unlocked.has(Difficulty.Hard)) {
+              unlocked.add(Difficulty.Hard);
+            }
+            if (record.difficulty === Difficulty.Hard && winsForDifficulty >= 8 && !unlocked.has(Difficulty.Advanced)) {
+              unlocked.add(Difficulty.Advanced);
+            }
+            if (record.difficulty === Difficulty.Advanced && winsForDifficulty >= 16) {
+              if (!unlocked.has(Difficulty.Expert)) unlocked.add(Difficulty.Expert);
+              if (!unlocked.has(Difficulty.Master)) unlocked.add(Difficulty.Master);
+            }
+
+            settings.unlockedDifficulties = Array.from(unlocked);
           } else {
             stats.currentStreak = 0;
           }
@@ -428,7 +452,7 @@ export const useStore = create<GameStore>()(
           stats.totalMinutesPlayed += Math.floor(record.durationSeconds / 60);
           stats.recentGames = [record, ...stats.recentGames].slice(0, 10);
           
-          return { stats };
+          return { stats, settings };
         });
       },
       

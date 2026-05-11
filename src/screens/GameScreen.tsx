@@ -13,8 +13,11 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useStore } from '../store/useStore';
 import { SudokuValidator } from '../utils/sudoku';
-import { SudokuCell } from '../types';
+import { Difficulty, SudokuCell } from '../types';
 import { formatTime } from '../utils/time';
+import type { lightColors } from '../theme/colors';
+
+type ThemeColors = typeof lightColors;
 
 const MAX_SECOND_CHANCES = 3;
 
@@ -43,20 +46,21 @@ const D = {
 
 // ─── Reusable action button ───────────────────────────────────────────────────────────────────
 const Btn = ({
-  LIcon, label, active, onPress, disabled,
+  LIcon, label, active, onPress, disabled, themeColors,
 }: {
   LIcon: React.FC<{ size: number; color: string; strokeWidth: number }>;
   label: string;
   active?: boolean;
   onPress: () => void;
   disabled?: boolean;
+  themeColors: { accent: string; accentDim: string; textSecondary: string };
 }) => (
   <TouchableOpacity
     onPress={onPress} disabled={disabled} activeOpacity={0.65}
-    style={[S.actBtn, active && { backgroundColor: D.actActiveBg }, disabled && { opacity: 0.3 }]}
+    style={[S.actBtn, active && { backgroundColor: themeColors.accentDim }, disabled && { opacity: 0.3 }]}
   >
-    <LIcon size={22} color={active ? D.actActive : D.actClr} strokeWidth={1.8} />
-    <Text style={[S.actLbl, { color: active ? D.actActive : D.actClr }]}>{label}</Text>
+    <LIcon size={22} color={active ? themeColors.accent : themeColors.textSecondary} strokeWidth={1.8} />
+    <Text style={[S.actLbl, { color: active ? themeColors.accent : themeColors.textSecondary }]}>{label}</Text>
   </TouchableOpacity>
 );
 
@@ -70,23 +74,30 @@ interface BoardProps {
   cells: SudokuCell[];
   dim: number;          // board pixel size (exact)
   cellSize: number;
-  colors: C;
+  colors: ThemeColors;
   selectedIdx: number | null;
   related: Set<number>;
   sameNum: Set<number>;
   isPaused: boolean;
   showMistakes: boolean;
-  anims: React.MutableRefObject<Record<number, Animated.Value>>;
+  isDark: boolean;
+  anims:      React.MutableRefObject<Record<number, Animated.Value>>;
+  shakeAnims: React.MutableRefObject<Record<number, Animated.Value>>;
   onCell: (idx: number) => void;
 }
 
 const Board = React.memo(({
   cells, dim, cellSize, colors, selectedIdx, related, sameNum,
-  isPaused, showMistakes, anims, onCell,
+  isPaused, showMistakes, anims, shakeAnims, onCell, isDark,
 }: BoardProps) => {
   const getAnim = (i: number) => {
     if (!anims.current[i]) anims.current[i] = new Animated.Value(1);
     return anims.current[i];
+  };
+
+  const getShake = (i: number) => {
+    if (!shakeAnims.current[i]) shakeAnims.current[i] = new Animated.Value(0);
+    return shakeAnims.current[i];
   };
 
   const getCellBg = (cell: SudokuCell, idx: number) => {
@@ -99,19 +110,38 @@ const Board = React.memo(({
 
   const noteSize = Math.max(7, Math.floor(cellSize * 0.22));
 
+  const getCellBorders = (idx: number) => {
+    const col = idx % 9;
+    const row = Math.floor(idx / 9);
+    const rightIsBox  = col === 2 || col === 5;
+    const bottomIsBox = row === 2 || row === 5;
+    return {
+      borderRightWidth:  col === 8 ? 0 : rightIsBox  ? BOX_LINE  : CELL_LINE,
+      borderBottomWidth: row === 8 ? 0 : bottomIsBox ? BOX_LINE  : CELL_LINE,
+      borderRightColor:  rightIsBox  ? colors.borderBox  : colors.borderCell,
+      borderBottomColor: bottomIsBox ? colors.borderBox  : colors.borderCell,
+    };
+  };
+
   return (
     <View style={[S.boardOuter, {
       width: dim + BOARD_OUTER * 2,
       height: dim + BOARD_OUTER * 2,
       borderColor: colors.borderBoard,
       backgroundColor: colors.borderBoard,
+      shadowOpacity: isDark ? 0 : 0.10,
+      elevation: isDark ? 0 : 4,
     }]}>
-      {/* ── Cells (no individual borders) ── */}
+      {/* ── Cells ── */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', width: dim, height: dim }}>
         {cells.map((cell, idx) => {
-          const numClr = (cell.isError && showMistakes) ? colors.textError : cell.isGiven ? colors.textGiven : colors.textInput;
+          const isSelected = idx === selectedIdx;
+          const numClr = (cell.isError && showMistakes) ? colors.textError
+            : isSelected                               ? colors.onPrimary
+            : cell.isGiven                            ? colors.textGiven
+            : colors.textInput;
           return (
-            <Animated.View key={idx} style={{ transform: [{ scale: getAnim(idx) }] }}>
+            <Animated.View key={idx} style={{ transform: [{ scale: getAnim(idx) }, { translateX: getShake(idx) }] }}>
               <TouchableOpacity
                 onPress={() => !isPaused && onCell(idx)}
                 activeOpacity={0.7}
@@ -119,13 +149,14 @@ const Board = React.memo(({
                   width: cellSize, height: cellSize,
                   backgroundColor: getCellBg(cell, idx),
                   alignItems: 'center', justifyContent: 'center',
+                  ...getCellBorders(idx),
                 }}
               >
                 {cell.value !== null ? (
                   <Text style={{
                     fontSize: Math.floor(cellSize * 0.52),
                     color: numClr,
-                    fontWeight: cell.isGiven ? '700' : '500',
+                    fontWeight: cell.isGiven ? '700' : '600',
                     includeFontPadding: false,
                   }}>
                     {cell.value}
@@ -149,42 +180,13 @@ const Board = React.memo(({
         })}
       </View>
 
-      {/* ── Vertical grid lines (absolute overlay) ── */}
-      {[1,2,3,4,5,6,7,8].map(col => {
-        const thick = col % 3 === 0;
-        const lw    = thick ? BOX_LINE : CELL_LINE;
-        return (
-          <View key={`v${col}`} style={{
-            position: 'absolute',
-            left: col * cellSize + BOARD_OUTER - lw / 2,
-            top: BOARD_OUTER, bottom: BOARD_OUTER,
-            width: lw,
-            backgroundColor: thick ? colors.borderBox : colors.borderCell,
-          }} />
-        );
-      })}
-
-      {/* ── Horizontal grid lines (absolute overlay) ── */}
-      {[1,2,3,4,5,6,7,8].map(row => {
-        const thick = row % 3 === 0;
-        const lh    = thick ? BOX_LINE : CELL_LINE;
-        return (
-          <View key={`h${row}`} style={{
-            position: 'absolute',
-            top: row * cellSize + BOARD_OUTER - lh / 2,
-            left: BOARD_OUTER, right: BOARD_OUTER,
-            height: lh,
-            backgroundColor: thick ? colors.borderBox : colors.borderCell,
-          }} />
-        );
-      })}
     </View>
   );
 });
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export const GameScreen: React.FC = () => {
-  const { colors }        = useTheme();
+  const { colors, isDark } = useTheme();
   const navigation        = useNavigation();
   const insets            = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -224,7 +226,9 @@ export const GameScreen: React.FC = () => {
   const cellSize   = Math.min(cellFromW, cellFromH);
   const boardDim   = cellSize * 9;
 
-  const mistakeLimit   = settings.mistakeLimit || 3;
+  const noUndo         = difficulty === Difficulty.Expert || difficulty === Difficulty.Master;
+  const mistakeLimit   = settings.mistakeLimit;
+  const mistakeText    = mistakeLimit > 0 ? `${mistakes}/${mistakeLimit}` : `${mistakes}`;
   const remainingHints = Math.max(0, settings.hintsPerGame - hintsUsed);
   const diffLabel      = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
 
@@ -282,7 +286,9 @@ export const GameScreen: React.FC = () => {
     return done;
   }, [cells]);
 
-  const anims = useRef<Record<number, Animated.Value>>({});
+  const anims      = useRef<Record<number, Animated.Value>>({});
+  const shakeAnims  = useRef<Record<number, Animated.Value>>({});
+
   const animCell = (idx: number) => {
     if (!anims.current[idx]) anims.current[idx] = new Animated.Value(1);
     Animated.sequence([
@@ -291,15 +297,53 @@ export const GameScreen: React.FC = () => {
     ]).start();
   };
 
+  const shakeCell = (idx: number) => {
+    if (!shakeAnims.current[idx]) shakeAnims.current[idx] = new Animated.Value(0);
+    const a = shakeAnims.current[idx];
+    a.setValue(0);
+    Animated.sequence([
+      Animated.timing(a, { toValue:  7, duration: 45, useNativeDriver: true }),
+      Animated.timing(a, { toValue: -7, duration: 45, useNativeDriver: true }),
+      Animated.timing(a, { toValue:  5, duration: 40, useNativeDriver: true }),
+      Animated.timing(a, { toValue: -5, duration: 40, useNativeDriver: true }),
+      Animated.timing(a, { toValue:  0, duration: 35, useNativeDriver: true }),
+    ]).start();
+  };
+
+  // ── Detect number-entry outcomes and trigger matching animations ──────────
+  const prevCellsRef = useRef<typeof cells>([]);
+  useEffect(() => {
+    const prev = prevCellsRef.current;
+    if (prev.length > 0 && prev.length === cells.length && selectedIdx !== null) {
+      const cell     = cells[selectedIdx];
+      const prevCell = prev[selectedIdx];
+      if (cell.isError && !prevCell?.isError) {
+        shakeCell(selectedIdx);                            // wrong — shake
+      } else if (cell.value !== null && cell.value !== prevCell?.value && !cell.isError) {
+        animCell(selectedIdx);                             // correct — pulse
+      }
+    }
+    prevCellsRef.current = cells;
+  }, [cells, selectedIdx]);
+
+  // ── Diagonal wave sweep on puzzle completion ──────────────────────────────
+  useEffect(() => {
+    if (!isCompleted || isFailed) return;
+    cells.forEach((_, idx) => {
+      const delay = (Math.floor(idx / 9) + idx % 9) * 18;
+      setTimeout(() => animCell(idx), delay);
+    });
+  }, [isCompleted, isFailed]);
+
   if (!cells.length) {
     return (
       <View style={[S.root, { backgroundColor: colors.bgPage, paddingTop: insets.top, alignItems: 'center', justifyContent: 'center' }]}>
         <Text style={[{ fontSize: 18, fontWeight: '600', marginBottom: 20, color: colors.textPrimary }]}>No puzzle loaded</Text>
         <TouchableOpacity
-          style={[S.primaryBtn, { backgroundColor: D.primary }]}
+          style={[S.primaryBtn, { backgroundColor: colors.primary }]}
           onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home' as never)}
         >
-          <Text style={S.primaryBtnTxt}>Go to Home</Text>
+          <Text style={[S.primaryBtnTxt, { color: colors.onPrimary }]}>Go to Home</Text>
         </TouchableOpacity>
       </View>
     );
@@ -330,8 +374,8 @@ export const GameScreen: React.FC = () => {
       <View style={[S.statsRow, { height: H_STATS }]}>
         <View style={S.statCell}>
           <Text style={[S.statLbl, { color: colors.textSecondary }]}>MISTAKES</Text>
-          <Text style={[S.statVal, { color: mistakes >= mistakeLimit ? D.numErr : colors.textPrimary }]}>
-            {mistakes}/{mistakeLimit}
+          <Text style={[S.statVal, { color: (mistakeLimit > 0 && mistakes >= mistakeLimit) ? colors.textError : colors.textPrimary }]}>
+            {mistakeText}
           </Text>
         </View>
         <View style={[S.statCell, S.statMid, { borderColor: colors.outlineVariant }]}>
@@ -342,7 +386,7 @@ export const GameScreen: React.FC = () => {
         </View>
         <View style={S.statCell}>
           <Text style={[S.statLbl, { color: colors.textSecondary }]}>POINTS</Text>
-          <Text style={[S.statVal, { color: D.actActive }]}>{livePoints}</Text>
+          <Text style={[S.statVal, { color: colors.accent }]}>{livePoints}</Text>
         </View>
       </View>
 
@@ -351,19 +395,21 @@ export const GameScreen: React.FC = () => {
         <Board
           cells={cells} dim={boardDim} cellSize={cellSize}
           colors={colors}
+          isDark={isDark}
           selectedIdx={selectedIdx} related={related} sameNum={sameNum}
           isPaused={isPaused} showMistakes={settings.showMistakes}
           anims={anims}
+          shakeAnims={shakeAnims}
           onCell={(idx) => { useStore.getState().selectCell(idx); animCell(idx); }}
         />
       </View>
 
       {/* ACTIONS */}
       <View style={[S.actRow, { height: H_ACTIONS }]}>
-        <Btn LIcon={Eraser}     label="Erase" onPress={() => useStore.getState().eraseCell()}       disabled={isPaused} />
-        <Btn LIcon={PencilLine} label="Notes" onPress={() => useStore.getState().toggleNotesMode()} disabled={isPaused} active={notesMode} />
-        <Btn LIcon={Lightbulb}  label={`Hint (${remainingHints})`} onPress={() => useStore.getState().useHint()} disabled={isPaused || remainingHints === 0} />
-        <Btn LIcon={RotateCcw}  label="Undo"  onPress={() => useStore.getState().undoMove()}        disabled={isPaused} />
+        <Btn LIcon={Eraser}     label="Erase" onPress={() => useStore.getState().eraseCell()}       disabled={isPaused} themeColors={colors} />
+        <Btn LIcon={PencilLine} label="Notes" onPress={() => useStore.getState().toggleNotesMode()} disabled={isPaused} active={notesMode} themeColors={colors} />
+        <Btn LIcon={Lightbulb}  label={`Hint (${remainingHints})`} onPress={() => useStore.getState().useHint()} disabled={isPaused || remainingHints === 0} themeColors={colors} />
+        <Btn LIcon={RotateCcw}  label="Undo"  onPress={() => useStore.getState().undoMove()}        disabled={isPaused || noUndo} themeColors={colors} />
       </View>
 
       {/* NUMBER PAD — completed digits are hidden, keeping grid stable */}
@@ -392,7 +438,7 @@ export const GameScreen: React.FC = () => {
           <View style={[S.pauseCard, { backgroundColor: colors.bgSurface }]}>
             {/* Icon ring */}
             <View style={[S.pauseIconRing, { backgroundColor: colors.bgSurfaceContainerHighest }]}>
-              <Pause size={32} color={D.primary} strokeWidth={2} />
+              <Pause size={32} color={colors.primary} strokeWidth={2} />
             </View>
 
             <Text style={[S.pauseTitle, { color: colors.textPrimary }]}>Game Paused</Text>
@@ -401,18 +447,18 @@ export const GameScreen: React.FC = () => {
             {/* Difficulty pill */}
             <View style={[S.pauseDiffPill, { borderColor: colors.outlineVariant }]}>
               <Text style={[S.pauseDiffTxt, { color: colors.textSecondary }]}>
-                {difficulty.toUpperCase()} • {mistakes}/{mistakeLimit} mistakes
+                {difficulty.toUpperCase()} • {mistakeText} mistakes
               </Text>
             </View>
 
             <View style={S.pauseBtnStack}>
               {/* Resume */}
               <TouchableOpacity
-                style={[S.pauseBtn, { backgroundColor: D.primary }]}
+                style={[S.pauseBtn, { backgroundColor: colors.primary }]}
                 onPress={() => useStore.getState().togglePause()}
               >
-                <Play size={18} color="#fff" strokeWidth={2} />
-                <Text style={[S.pauseBtnTxt, { color: '#fff' }]}>Resume</Text>
+                <Play size={18} color={colors.onPrimary} strokeWidth={2} />
+                <Text style={[S.pauseBtnTxt, { color: colors.onPrimary }]}>Resume</Text>
               </TouchableOpacity>
 
               {/* Go Home */}
@@ -452,7 +498,7 @@ export const GameScreen: React.FC = () => {
             <View style={S.resultRow}>
               {[
                 { label: 'TIME',     value: formatTime(elapsed) },
-                { label: 'MISTAKES', value: `${mistakes}/${mistakeLimit}` },
+                { label: 'MISTAKES', value: mistakeText },
                 { label: 'POINTS',   value: `${livePoints}` },
               ].map(({ label, value }) => (
                 <View key={label} style={[S.resultCard, { borderColor: colors.outlineVariant }]}>
@@ -463,7 +509,7 @@ export const GameScreen: React.FC = () => {
             </View>
 
             {/* Second chance remaining indicator */}
-            {secondChancesUsed < MAX_SECOND_CHANCES && (
+            {(secondChancesUsed < MAX_SECOND_CHANCES) && (
               <View style={S.chancePillRow}>
                 {Array.from({ length: MAX_SECOND_CHANCES }).map((_, i) => (
                   <View
@@ -483,7 +529,7 @@ export const GameScreen: React.FC = () => {
             )}
 
             {/* Second Chance button (if available) */}
-            {secondChancesUsed < MAX_SECOND_CHANCES ? (
+            {(secondChancesUsed < MAX_SECOND_CHANCES) ? (
               <TouchableOpacity
                 style={[S.primaryBtn, { backgroundColor: '#40c057', width: '100%', marginBottom: 10 }]}
                 onPress={() => useStore.getState().useSecondChance()}
@@ -501,17 +547,16 @@ export const GameScreen: React.FC = () => {
 
             <TouchableOpacity
               style={[S.primaryBtn, {
-                backgroundColor: secondChancesUsed < MAX_SECOND_CHANCES ? colors.bgSurfaceContainerLowest : D.primary,
+                backgroundColor: secondChancesUsed < MAX_SECOND_CHANCES ? colors.bgSurfaceContainerLowest : colors.primary,
                 borderWidth: secondChancesUsed < MAX_SECOND_CHANCES ? 1 : 0,
                 borderColor: colors.outlineVariant,
                 width: '100%',
               }]}
               onPress={() => useStore.getState().startNewGame(difficulty)}
             >
-              <Text style={[
-                S.primaryBtnTxt,
-                secondChancesUsed < MAX_SECOND_CHANCES && { color: colors.textPrimary },
-              ]}>New Game</Text>
+              <Text style={[S.primaryBtnTxt, {
+                color: secondChancesUsed < MAX_SECOND_CHANCES ? colors.textPrimary : colors.onPrimary,
+              }]}>New Game</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -529,7 +574,7 @@ export const GameScreen: React.FC = () => {
         <View style={S.sheetOverlay}>
           <View style={[S.sheet, { backgroundColor: colors.bgSurface, paddingBottom: insets.bottom + 24 }]}>
             <View style={[S.dragHandle, { backgroundColor: colors.outlineVariant }]} />
-            <View style={[S.successIcon, { backgroundColor: D.success }]}>
+            <View style={[S.successIcon, { backgroundColor: colors.success }]}>
               <Text style={S.successCheck}>✓</Text>
             </View>
             <Text style={[S.sheetTitle, { color: colors.textPrimary }]}>Puzzle Complete</Text>
@@ -539,7 +584,7 @@ export const GameScreen: React.FC = () => {
             <View style={S.resultRow}>
               {[
                 { label: 'TIME',     value: formatTime(elapsed) },
-                { label: 'MISTAKES', value: `${mistakes}/${mistakeLimit}` },
+                { label: 'MISTAKES', value: mistakeText },
                 { label: 'POINTS',   value: `${livePoints}` },
               ].map(({ label, value }) => (
                 <View key={label} style={[S.resultCard, { borderColor: colors.outlineVariant }]}>
@@ -548,15 +593,15 @@ export const GameScreen: React.FC = () => {
                 </View>
               ))}
             </View>
-            <TouchableOpacity style={[S.primaryBtn, { backgroundColor: D.primary, width: '100%' }]}
+            <TouchableOpacity style={[S.primaryBtn, { backgroundColor: colors.primary, width: '100%' }]}
               onPress={() => useStore.getState().startNewGame(difficulty)}>
-              <Text style={S.primaryBtnTxt}>New Game</Text>
+              <Text style={[S.primaryBtnTxt, { color: colors.onPrimary }]}>New Game</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={S.txtBtn}
               onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home' as never)}
             >
-              <Text style={{ color: D.primary, fontSize: 16, fontWeight: '500' }}>Back to Home</Text>
+              <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '500' }}>Back to Home</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -588,6 +633,12 @@ const S = StyleSheet.create({
   pauseBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14 },
   pauseBtnTxt:   { fontSize: 16, fontWeight: '700' },
 
+  boardWell: {
+    padding: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
   // Board outer frame – cells live inside, lines overlay on top
   boardOuter: {
     borderWidth: BOARD_OUTER,

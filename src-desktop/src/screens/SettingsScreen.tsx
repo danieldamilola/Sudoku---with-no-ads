@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Minus, Plus } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 const Toggle: React.FC<{ value: boolean; onChange: () => void }> = ({ value, onChange }) => (
@@ -33,6 +34,7 @@ export const SettingsScreen: React.FC = () => {
   const set = (key: keyof typeof settings, value: boolean | number) => {
     updateSettings({ [key]: value } as Partial<typeof settings>);
   };
+  const setZoomLevel = useStore((s) => s.setZoomLevel);
 
   return (
     <main className="screen">
@@ -47,6 +49,29 @@ export const SettingsScreen: React.FC = () => {
         <div className="settings-grid">
           <div style={{ display: 'grid', gap: 18 }}>
             <Section title="Appearance">
+              <Row title="Zoom" detail="Scale the interface. Also works with Ctrl + / Ctrl −.">
+                <div className="zoom-controls">
+                  <button
+                    className="zoom-button"
+                    type="button"
+                    disabled={settings.zoomLevel <= 65}
+                    onClick={() => setZoomLevel(settings.zoomLevel - 5)}
+                    aria-label="Zoom out"
+                  >
+                    <Minus size={15} strokeWidth={2} />
+                  </button>
+                  <span className="zoom-value">{settings.zoomLevel}%</span>
+                  <button
+                    className="zoom-button"
+                    type="button"
+                    disabled={settings.zoomLevel >= 100}
+                    onClick={() => setZoomLevel(settings.zoomLevel + 5)}
+                    aria-label="Zoom in"
+                  >
+                    <Plus size={15} strokeWidth={2} />
+                  </button>
+                </div>
+              </Row>
               <Row title="Color theme" detail="Choose a calm light board or the new ink dark mode.">
                 <div className="segmented">
                   {[

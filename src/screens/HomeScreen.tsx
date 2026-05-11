@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BarChart3, Settings, ChevronRight } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, BarChart3, Settings } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useStore } from '../store/useStore';
 import { Difficulty, SudokuCell } from '../types';
@@ -18,61 +18,13 @@ const DIFF: Record<Difficulty, {
   tag: string; tier: string; desc: string;
   tagColor: string; tagBg: string;
 }> = {
-  [Difficulty.Easy]:   { tag: 'EASY',   tier: 'Beginner', desc: 'Gentle logic for a quick mental break.',   tagColor: '#2f9e44', tagBg: '#d3f9d8' },
-  [Difficulty.Medium]: { tag: 'MEDIUM', tier: 'Skilled',  desc: 'Balanced puzzles for daily focus.',        tagColor: '#3b5bdb', tagBg: '#dbe4ff' },
-  [Difficulty.Hard]:   { tag: 'HARD',   tier: 'Advanced', desc: 'Complex patterns and deep strategy.',      tagColor: '#e67700', tagBg: '#fff3cd' },
-  [Difficulty.Expert]: { tag: 'EXPERT', tier: 'Master',   desc: 'Extreme challenges for the dedicated.',    tagColor: '#c92a2a', tagBg: '#ffe3e3' },
+  [Difficulty.Beginner]: { tag: 'BEGINNER', tier: 'Beginner', desc: 'Gentle logic for a quick mental break.',   tagColor: '#34c759', tagBg: '#d1fae5' },
+  [Difficulty.Skill]:    { tag: 'SKILL',    tier: 'Skilled',  desc: 'Balanced puzzles for daily focus.',        tagColor: '#274ed5', tagBg: '#dbeafe' },
+  [Difficulty.Hard]:     { tag: 'HARD',     tier: 'Advanced', desc: 'Complex patterns and deep strategy.',      tagColor: '#845000', tagBg: '#ffddbb' },
+  [Difficulty.Advanced]: { tag: 'ADVANCED', tier: 'Expert',   desc: 'Challenging for experienced players.',     tagColor: '#ba1a1a', tagBg: '#ffdad6' },
+  [Difficulty.Expert]:   { tag: 'EXPERT',   tier: 'Master',   desc: 'Extreme challenges for the dedicated.',    tagColor: '#ba1a1a', tagBg: '#ffdad6' },
+  [Difficulty.Master]:   { tag: 'MASTER',   tier: 'Grandmaster', desc: 'Ultimate challenge for Sudoku masters.', tagColor: '#7c3aed', tagBg: '#ede9fe' },
 };
-
-// Static sudoku grid snapshot — never re-renders with random values
-const HERO_CLUES: Record<number, number> = {
-   0:5,  1:3,  4:7,  9:6, 12:1, 13:9, 14:5,
-  18:9, 19:8, 22:6, 27:8, 31:6, 35:3,
-  36:4, 40:8, 44:3, 45:7, 51:2, 53:6,
-  54:6, 58:2, 63:1, 67:8, 68:6, 72:8,
-  76:7, 77:9, 80:5,
-};
-
-const HeroGrid: React.FC = () => {
-  const cells = useMemo(() => Array.from({ length: 81 }, (_, i) => i), []);
-  return (
-    <View style={hero.grid}>
-      {cells.map(i => {
-        const r = Math.floor(i / 9);
-        const c = i % 9;
-        const rW = (c + 1) % 3 === 0 ? 2 : StyleSheet.hairlineWidth;
-        const bW = (r + 1) % 3 === 0 ? 2 : StyleSheet.hairlineWidth;
-        const num = HERO_CLUES[i];
-        return (
-          <View key={i} style={{
-            width: '11.11%', aspectRatio: 1,
-            borderRightWidth: rW, borderBottomWidth: bW,
-            borderRightColor: rW === 2 ? '#555' : '#ccc',
-            borderBottomColor: bW === 2 ? '#555' : '#ccc',
-            alignItems: 'center', justifyContent: 'center',
-            backgroundColor: '#fafaf8',
-          }}>
-            {num ? (
-              <Text style={{ fontSize: 9, color: '#333', fontWeight: '700', includeFontPadding: false }}>
-                {num}
-              </Text>
-            ) : null}
-          </View>
-        );
-      })}
-    </View>
-  );
-};
-
-const hero = StyleSheet.create({
-  grid: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    borderTopWidth: 2, borderLeftWidth: 2, borderColor: '#555',
-    borderRadius: 3, overflow: 'hidden',
-    width: 132, height: 132,
-    backgroundColor: '#fafaf8',
-  },
-});
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 export const HomeScreen: React.FC = () => {
@@ -89,6 +41,7 @@ export const HomeScreen: React.FC = () => {
   const settings  = useStore((s) => s.settings);
 
   const hasActive = cells.some((c: SudokuCell) => c.value !== null) && !completed;
+  const [showAllDifficulties, setShowAllDifficulties] = React.useState(false);
 
   const startGame = (d: Difficulty) => {
     useStore.getState().startNewGame(d);
@@ -96,6 +49,34 @@ export const HomeScreen: React.FC = () => {
   };
 
   const cardW = (width - 16 - 16 - 12) / 2;
+
+  const allBestTimes = (Object.values(stats.bestTimes) as (number | undefined)[]).filter((t): t is number => !!t);
+  const bestTime     = allBestTimes.length > 0 ? Math.min(...allBestTimes) : null;
+
+  const getUnlockRequirement = (d: Difficulty): string | null => {
+    if (settings.unlockedDifficulties.includes(d)) return null;
+    switch (d) {
+      case Difficulty.Hard: {
+        const wins = stats.recentGames.filter(g => g.difficulty === Difficulty.Skill && g.won).length;
+        return `Win ${Math.max(0, 4 - wins)} more in Skill`;
+      }
+      case Difficulty.Advanced: {
+        const wins = stats.recentGames.filter(g => g.difficulty === Difficulty.Hard && g.won).length;
+        return `Win ${Math.max(0, 8 - wins)} more in Hard`;
+      }
+      case Difficulty.Expert:
+      case Difficulty.Master: {
+        const wins = stats.recentGames.filter(g => g.difficulty === Difficulty.Advanced && g.won).length;
+        return `Win ${Math.max(0, 16 - wins)} more in Advanced`;
+      }
+      default:
+        return null;
+    }
+  };
+
+  const visibleDifficulties = showAllDifficulties 
+    ? [Difficulty.Beginner, Difficulty.Skill, Difficulty.Hard, Difficulty.Advanced, Difficulty.Expert, Difficulty.Master] as const
+    : [Difficulty.Beginner, Difficulty.Skill, Difficulty.Hard, Difficulty.Advanced] as const;
 
   return (
     <View style={[S.root, { backgroundColor: colors.bgPage, paddingTop: insets.top }]}>
@@ -117,19 +98,6 @@ export const HomeScreen: React.FC = () => {
         <Text style={[S.heroTitle, { color: colors.textPrimary }]}>Sudoku</Text>
         <Text style={[S.heroSub, { color: colors.textSecondary }]}>No ads. No noise. Just the puzzle.</Text>
 
-        {/* ── Hero image card ── */}
-        <View style={[S.heroCard, { backgroundColor: '#d6c8b4' }]}>
-          <View style={S.heroInner}>
-            <View style={{ flex: 1, justifyContent: 'center', paddingLeft: 20 }}>
-              <HeroGrid />
-            </View>
-            {/* decorative right side */}
-            <View style={{ width: 80, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 16 }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#8bac7a', opacity: 0.7, marginBottom: 8 }} />
-              <View style={{ width: 6, height: 80, borderRadius: 3, backgroundColor: '#5a4a3a', opacity: 0.5, marginRight: 12 }} />
-            </View>
-          </View>
-        </View>
 
         {/* ── Continue banner ── */}
         {hasActive && (
@@ -157,32 +125,67 @@ export const HomeScreen: React.FC = () => {
 
         {/* ── Difficulty grid ── */}
         <View style={S.diffGrid}>
-          {([Difficulty.Easy, Difficulty.Medium, Difficulty.Hard, Difficulty.Expert] as const).map((d) => {
+          {visibleDifficulties.map((d) => {
             const m = DIFF[d];
+            const isUnlocked = settings.unlockedDifficulties.includes(d);
+            const unlockReq = getUnlockRequirement(d);
             return (
               <TouchableOpacity
                 key={d}
-                style={[S.diffCard, { width: cardW, backgroundColor: colors.bgSurfaceContainerLowest, borderColor: colors.outlineVariant }]}
-                onPress={() => startGame(d)}
-                activeOpacity={0.75}
+                style={[
+                  S.diffCard, 
+                  { width: cardW, backgroundColor: colors.bgSurfaceContainerLowest, borderColor: colors.outlineVariant },
+                  !isUnlocked && { opacity: 0.5 }
+                ]}
+                onPress={() => isUnlocked && startGame(d)}
+                activeOpacity={isUnlocked ? 0.75 : 1}
+                disabled={!isUnlocked}
               >
                 <View style={[S.diffTag, { backgroundColor: m.tagBg }]}>
                   <Text style={[S.diffTagText, { color: m.tagColor }]}>{m.tag}</Text>
                 </View>
                 <Text style={[S.diffTier, { color: colors.textPrimary }]}>{m.tier}</Text>
                 <Text style={[S.diffDesc, { color: colors.textSecondary }]}>{m.desc}</Text>
+                {unlockReq && (
+                  <Text style={[S.unlockReq, { color: colors.textSecondary }]}>{unlockReq}</Text>
+                )}
+                {!isUnlocked && (
+                  <View style={[S.lockOverlay, { backgroundColor: 'rgba(0,0,0,0.3)' }]}>
+                    <Text style={[S.lockText, { color: '#fff' }]}>🔒</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
         </View>
 
+        {showAllDifficulties ? (
+          <TouchableOpacity 
+            style={S.seeMoreBtn} 
+            onPress={() => setShowAllDifficulties(false)}
+            activeOpacity={0.75}
+          >
+            <Text style={[S.seeMoreText, { color: colors.primary }]}>Show Less</Text>
+            <ChevronDown size={20} color={colors.primary} strokeWidth={2} style={{ transform: [{ rotate: '180deg' }] }} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={S.seeMoreBtn} 
+            onPress={() => setShowAllDifficulties(true)}
+            activeOpacity={0.75}
+          >
+            <Text style={[S.seeMoreText, { color: colors.primary }]}>See More</Text>
+            <ChevronDown size={20} color={colors.primary} strokeWidth={2} />
+          </TouchableOpacity>
+        )}
+
         {/* ── Progress strip ── */}
         <Text style={[S.progressLbl, { color: colors.textSecondary }]}>YOUR PROGRESS</Text>
         <View style={S.statsRow}>
           {[
-            { val: stats.bestTimes[Difficulty.Medium] ? formatTime(stats.bestTimes[Difficulty.Medium]) : '--:--', label: 'BEST TIME', color: '#3b5bdb' },
-            { val: stats.currentStreak.toString(), label: 'DAY STREAK', color: '#2f9e44' },
-            { val: stats.totalCompleted.toString(), label: 'SOLVED', color: '#e67700' },
+            { val: bestTime ? formatTime(bestTime) : '--:--', label: 'BEST TIME', color: '#274ed5' },
+            { val: stats.currentStreak.toString(), label: 'DAY STREAK', color: '#34c759' },
+            { val: stats.totalCompleted.toString(), label: 'SOLVED', color: '#845000' },
           ].map(({ val, label, color }) => (
             <View key={label} style={[S.statCard, { backgroundColor: colors.bgSurfaceContainerLowest, borderColor: colors.outlineVariant }]}>
               <Text style={[S.statVal, { color }]}>{val}</Text>
@@ -205,9 +208,6 @@ const S = StyleSheet.create({
   heroTitle:    { fontSize: 28, fontWeight: '800', textAlign: 'center', marginTop: 8 },
   heroSub:      { fontSize: 14, textAlign: 'center', marginBottom: 20, marginTop: 4 },
 
-  heroCard:     { marginHorizontal: 16, borderRadius: 16, overflow: 'hidden', height: 180, marginBottom: 20 },
-  heroInner:    { flex: 1, flexDirection: 'row' },
-
   continueBanner: { marginHorizontal: 16, marginBottom: 20, borderRadius: 12, borderWidth: 1.5, padding: 16, flexDirection: 'row', alignItems: 'center' },
   continueTitle:  { fontSize: 16, fontWeight: '700' },
   continueSub:    { fontSize: 13, marginTop: 2 },
@@ -222,6 +222,12 @@ const S = StyleSheet.create({
   diffTagText:  { fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
   diffTier:     { fontSize: 20, fontWeight: '800', marginBottom: 6 },
   diffDesc:     { fontSize: 12, lineHeight: 18, fontWeight: '400' },
+  unlockReq:    { fontSize: 11, marginTop: 8, fontWeight: '600', color: '#888' },
+  lockOverlay:  { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  lockText:     { fontSize: 24 },
+
+  seeMoreBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, marginBottom: 32 },
+  seeMoreText:  { fontSize: 14, fontWeight: '600' },
 
   progressLbl:  { fontSize: 11, fontWeight: '700', letterSpacing: 1, textAlign: 'center', marginBottom: 12 },
   statsRow:     { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 8 },

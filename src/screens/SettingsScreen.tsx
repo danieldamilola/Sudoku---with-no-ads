@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useStore } from '../store/useStore';
+import { BottomTabBar } from '../components/BottomTabBar';
 
 type C = ReturnType<typeof import('../theme/theme').createTheme>['colors'];
 
@@ -88,7 +89,6 @@ export const SettingsScreen: React.FC = () => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        <Text style={[S.pageTitle, { color: colors.textPrimary }]}>Settings</Text>
 
         {/* ── APPEARANCE ── */}
         <Text style={[S.sectionLbl, { color: colors.textSecondary }]}>APPEARANCE</Text>
@@ -173,6 +173,8 @@ export const SettingsScreen: React.FC = () => {
 
         <Text style={[S.version, { color: colors.textSecondary }]}>Sudoku 1.4.0</Text>
       </ScrollView>
+
+      <BottomTabBar active="Settings" />
     </View>
   );
 };

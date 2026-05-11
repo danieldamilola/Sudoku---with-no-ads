@@ -11,15 +11,12 @@ const Stack = createNativeStackNavigator();
 // ─── Animation presets ────────────────────────────────────────────────────────
 
 /**
- * FADE — used for Settings / Statistics.
- * Fast (220ms), no direction, no chrome sliding around.
- * Content simply appears and disappears — minimal, premium, calm.
- * Used by: iA Writer, Linear, Craft, Apple Notes.
+ * TAB — used for Settings / Statistics.
+ * Instant switch, no animation — matches native iOS/Android tab bar behaviour.
  */
-const FADE = {
-  animation: 'fade' as const,
-  animationDuration: 220,
-  gestureEnabled: false,   // fade has no meaningful swipe gesture
+const TAB = {
+  animation: 'none' as const,
+  gestureEnabled: false,
 };
 
 /**
@@ -63,18 +60,18 @@ export const AppNavigator: React.FC = () => {
           options={GAME}
         />
 
-        {/* Settings — clean fade: same-level content switch */}
+        {/* Settings — instant: tab-bar switch */}
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
-          options={FADE}
+          options={TAB}
         />
 
-        {/* Statistics — clean fade: same-level content switch */}
+        {/* Statistics — instant: tab-bar switch */}
         <Stack.Screen
           name="Statistics"
           component={StatisticsScreen}
-          options={FADE}
+          options={TAB}
         />
       </Stack.Navigator>
     </NavigationContainer>

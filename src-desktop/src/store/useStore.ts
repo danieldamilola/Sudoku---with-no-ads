@@ -17,6 +17,8 @@ const defaultSettings: GameSettings = {
   hintsPerGame: 3,
   hapticFeedback: false,
   soundEffects: false,
+  unlockedDifficulties: ['beginner', 'skill'],
+  zoomLevel: 100,
 };
 
 const defaultStats: GameStats = {
@@ -31,7 +33,12 @@ const defaultStats: GameStats = {
 const STORAGE_KEY = 'sudoku-desktop-storage';
 
 const POINTS_PER_CELL: Record<string, number> = {
-  easy: 10, medium: 20, hard: 30, expert: 50,
+  beginner: 5,
+  skill: 10,
+  hard: 20,
+  advanced: 30,
+  expert: 50,
+  master: 75,
 };
 const MAX_SECOND_CHANCES = 3;
 
@@ -68,6 +75,7 @@ interface GameStore extends GameState {
   updateStats: (record: GameRecord) => void;
   resetStats: () => void;
   tick: () => void;
+  setZoomLevel: (level: number) => void;
 }
 
 const getPersistedState = (state: GameStore) => ({
@@ -93,7 +101,7 @@ const getPersistedState = (state: GameStore) => ({
 export const useStore = create<GameStore>()((set, get) => ({
   cells: [] as SudokuCell[],
   solution: [] as number[],
-  difficulty: 'easy' as Difficulty,
+  difficulty: 'beginner' as Difficulty,
   elapsedSeconds: 0,
   mistakes: 0,
   hintsUsed: 0,
@@ -275,21 +283,45 @@ export const useStore = create<GameStore>()((set, get) => ({
     set((state) => ({ settings: { ...state.settings, ...newSettings } }));
   },
 
+  setZoomLevel: (level: number) => {
+    set((state) => ({ settings: { ...state.settings, zoomLevel: Math.max(65, Math.min(100, level)) } }));
+  },
+
   updateStats: (record: GameRecord) => {
     set((state) => {
       const stats = { ...state.stats, recentGames: [...state.stats.recentGames] };
+      const settings = { ...state.settings };
+      
       if (record.won) {
         stats.totalCompleted += 1;
         stats.currentStreak += 1;
         if (stats.currentStreak > stats.bestStreak) stats.bestStreak = stats.currentStreak;
         const cur = stats.bestTimes[record.difficulty];
         if (!cur || record.durationSeconds < cur) stats.bestTimes[record.difficulty] = record.durationSeconds;
+
+        // Unlock logic
+        const winsForDifficulty = stats.recentGames.filter(g => g.difficulty === record.difficulty && g.won).length + 1;
+        const unlocked = new Set(settings.unlockedDifficulties);
+
+        if (record.difficulty === 'skill' && winsForDifficulty >= 4 && !unlocked.has('hard')) {
+          unlocked.add('hard');
+        }
+        if (record.difficulty === 'hard' && winsForDifficulty >= 8 && !unlocked.has('advanced')) {
+          unlocked.add('advanced');
+        }
+        if (record.difficulty === 'advanced' && winsForDifficulty >= 16) {
+          if (!unlocked.has('expert')) unlocked.add('expert');
+          if (!unlocked.has('master')) unlocked.add('master');
+        }
+
+        settings.unlockedDifficulties = Array.from(unlocked);
       } else {
         stats.currentStreak = 0;
       }
+      
       stats.totalMinutesPlayed += Math.floor(record.durationSeconds / 60);
       stats.recentGames = [record, ...stats.recentGames].slice(0, 10);
-      return { stats };
+      return { stats, settings };
     });
   },
 
@@ -306,19 +338,27 @@ export const useStore = create<GameStore>()((set, get) => ({
 try {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
-    const persisted = JSON.parse(saved) as Partial<ReturnType<typeof getPersistedState>>;
-    useStore.setState((state) => ({
-      ...state,
-      ...persisted,
-      settings: { ...defaultSettings, ...persisted.settings },
-      stats: { ...defaultStats, ...persisted.stats },
-      moveHistory: persisted.moveHistory ?? [],
-    }));
+    try {
+      const persisted = JSON.parse(saved) as Partial<ReturnType<typeof getPersistedState>>;
+      useStore.setState((state) => ({
+        ...state,
+        ...persisted,
+        settings: { ...defaultSettings, ...persisted.settings },
+        stats: { ...defaultStats, ...persisted.stats },
+        moveHistory: persisted.moveHistory ?? [],
+      }));
+    } catch (err) {
+      console.error('Failed to load persisted state:', err);
+    }
   }
-} catch {}
+} catch (err) {
+  console.error('Failed to access localStorage:', err);
+}
 
 useStore.subscribe((state) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(getPersistedState(state)));
-  } catch {}
+  } catch (err) {
+    console.error('Failed to persist state:', err);
+  }
 });

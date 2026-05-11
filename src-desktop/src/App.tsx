@@ -12,10 +12,31 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const { startNewGame } = useStore();
   const darkMode = useStore((s) => s.settings.darkMode);
+  const zoomLevel = useStore((s) => s.settings.zoomLevel);
+  const setZoomLevel = useStore((s) => s.setZoomLevel);
 
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
   }, [darkMode]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--zoom-scale', String(zoomLevel / 100));
+  }, [zoomLevel]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return;
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        setZoomLevel(useStore.getState().settings.zoomLevel + 5);
+      } else if (e.key === '-') {
+        e.preventDefault();
+        setZoomLevel(useStore.getState().settings.zoomLevel - 5);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setZoomLevel]);
 
   const handleStartGame = (difficulty: Difficulty) => {
     startNewGame(difficulty);

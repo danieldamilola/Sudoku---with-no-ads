@@ -9,9 +9,6 @@ import { useTheme } from '../context/ThemeContext';
 type TabName = 'Home' | 'Statistics' | 'Settings';
 interface Props { active: TabName; }
 
-const ACTIVE_GREEN = '#40c057';
-const STROKE = 1.8;
-
 // ─── Tab configuration ────────────────────────────────────────────────────────
 const TABS: {
   name: TabName;
@@ -25,15 +22,14 @@ const TABS: {
 
 // ─── Tab Bar ─────────────────────────────────────────────────────────────────
 export const BottomTabBar: React.FC<Props> = ({ active }) => {
-  const { colors }  = useTheme();
-  const navigation  = useNavigation();
-  const insets      = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const navigation         = useNavigation();
+  const insets             = useSafeAreaInsets();
 
   const handleTab = (name: TabName) => {
-    if (name === active) return; // already here — no-op
+    if (name === active) return;
 
     if (name === 'Home') {
-      // Always go back to root Home
       if (navigation.canGoBack()) {
         navigation.dispatch(StackActions.popToTop());
       } else {
@@ -43,12 +39,8 @@ export const BottomTabBar: React.FC<Props> = ({ active }) => {
     }
 
     if (!navigation.canGoBack()) {
-      // We are at root (HomeScreen) — PUSH the target screen so Home stays in stack.
-      // This gives us [Home, Statistics] or [Home, Settings] — back button works correctly.
       navigation.navigate(name as never);
     } else {
-      // We are already one level deep (e.g. StatisticsScreen on top of Home).
-      // REPLACE the current top screen so the stack stays at [Home, target] — never grows.
       navigation.dispatch(StackActions.replace(name));
     }
   };
@@ -58,26 +50,31 @@ export const BottomTabBar: React.FC<Props> = ({ active }) => {
       S.bar,
       {
         backgroundColor: colors.bgSurface,
+        paddingBottom:   Math.max(insets.bottom, 10),
+        // Light: soft shadow lifts the bar. Dark: hairline border instead.
+        borderTopWidth:  isDark ? StyleSheet.hairlineWidth : 0,
         borderTopColor:  colors.outlineVariant,
-        paddingBottom:   Math.max(insets.bottom, 8),
+        shadowColor:     '#000',
+        shadowOpacity:   isDark ? 0 : 0.07,
+        elevation:       isDark ? 0 : 10,
       },
     ]}>
       {TABS.map(({ name, label, LIcon }) => {
-        const isActive   = active === name;
-        const iconColor  = isActive ? '#ffffff' : colors.textSecondary;
-        const labelColor = isActive ? ACTIVE_GREEN : colors.textSecondary;
+        const isActive = active === name;
+        const clr      = isActive ? colors.primary : colors.textSecondary;
 
         return (
           <TouchableOpacity
             key={name}
             style={S.tab}
             onPress={() => handleTab(name)}
-            activeOpacity={0.75}
+            activeOpacity={0.7}
           >
-            <View style={[S.iconWrap, isActive && { backgroundColor: ACTIVE_GREEN }]}>
-              <LIcon size={18} color={iconColor} strokeWidth={STROKE} />
-            </View>
-            <Text style={[S.label, { color: labelColor, fontWeight: isActive ? '700' : '500' }]}>
+            {/* Top indicator — always rendered to prevent layout shift */}
+            <View style={[S.indicator, { backgroundColor: isActive ? colors.primary : 'transparent' }]} />
+
+            <LIcon size={22} color={clr} strokeWidth={isActive ? 2.2 : 1.8} />
+            <Text style={[S.label, { color: clr, fontWeight: isActive ? '700' : '400' }]}>
               {label}
             </Text>
           </TouchableOpacity>
@@ -89,25 +86,25 @@ export const BottomTabBar: React.FC<Props> = ({ active }) => {
 
 const S = StyleSheet.create({
   bar: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    paddingTop: 8,
+    flexDirection:  'row',
+    shadowOffset:   { width: 0, height: -3 },
+    shadowRadius:   12,
   },
   tab: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 2,
+    flex:           1,
+    alignItems:     'center',
+    paddingTop:     10,
+    paddingBottom:  4,
+    gap:            6,
   },
-  iconWrap: {
-    width: 58,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  indicator: {
+    width:          28,
+    height:         2.5,
+    borderRadius:   2,
+    marginBottom:   4,
   },
   label: {
-    fontSize: 11,
-    letterSpacing: 0.2,
+    fontSize:       11,
+    letterSpacing:  0.3,
   },
 });

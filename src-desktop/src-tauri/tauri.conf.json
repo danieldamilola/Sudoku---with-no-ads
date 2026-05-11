@@ -36,6 +36,12 @@
     "copyright": "© 2025 Daniel Damilola",
     "shortDescription": "Sudoku — No ads. No noise. Just the puzzle.",
     "longDescription": "A clean, minimal Sudoku desktop app with no ads, hints, notes, and multiple difficulty levels.",
-    "icon": []
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }

@@ -4,17 +4,19 @@ import type { Difficulty, GameRecord } from '../types';
 
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
-const DIFFS: Difficulty[] = ['easy', 'medium', 'hard', 'expert'];
+const DIFFS: Difficulty[] = ['beginner', 'skill', 'hard', 'advanced', 'expert', 'master'];
 const DIFF_STYLE: Record<Difficulty, { color: string; bg: string }> = {
-  easy: { color: '#30a46c', bg: '#e8f7ee' },
-  medium: { color: '#007aff', bg: '#e8f2ff' },
+  beginner: { color: '#30a46c', bg: '#e8f7ee' },
+  skill: { color: '#007aff', bg: '#e8f2ff' },
   hard: { color: '#d97706', bg: '#fff4df' },
-  expert: { color: '#d92d20', bg: '#fff0ef' },
+  advanced: { color: '#d92d20', bg: '#fff0ef' },
+  expert: { color: '#7c3aed', bg: '#ede9fe' },
+  master: { color: '#5b21b6', bg: '#f3e8ff' },
 };
 
 const scoreFor = (game: GameRecord) => {
   if (!game.won) return 0;
-  const mult = ({ easy: 1, medium: 2, hard: 3, expert: 4 } as Record<Difficulty, number>)[game.difficulty];
+  const mult = ({ beginner: 1, skill: 2, hard: 3, advanced: 4, expert: 5, master: 6 } as Record<Difficulty, number>)[game.difficulty];
   return (100 + (game.mistakes === 0 ? 50 : 0)) * mult;
 };
 
@@ -34,7 +36,7 @@ export const StatisticsScreen: React.FC = () => {
           </div>
         </header>
 
-        <section className="stat-grid" style={{ marginBottom: 22 }}>
+        <section className="stat-grid stat-grid-4" style={{ marginBottom: 22 }}>
           {[
             { label: 'Solved', value: stats.totalCompleted.toString() },
             { label: 'Win rate', value: winRate === null ? '--' : `${winRate}%` },

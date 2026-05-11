@@ -1,8 +1,10 @@
 export enum Difficulty {
-  Easy = 'easy',
-  Medium = 'medium',
+  Beginner = 'beginner',
+  Skill = 'skill',
   Hard = 'hard',
+  Advanced = 'advanced',
   Expert = 'expert',
+  Master = 'master',
 }
 
 export interface SudokuCell {
@@ -50,6 +52,7 @@ export interface GameSettings {
   hintsPerGame: number;
   hapticFeedback: boolean;
   soundEffects: boolean;
+  unlockedDifficulties: Difficulty[];
 }
 
 export interface GameStats {
