@@ -70,6 +70,7 @@ interface BoardProps {
   cells: SudokuCell[];
   dim: number;          // board pixel size (exact)
   cellSize: number;
+  colors: C;
   selectedIdx: number | null;
   related: Set<number>;
   sameNum: Set<number>;
@@ -80,7 +81,7 @@ interface BoardProps {
 }
 
 const Board = React.memo(({
-  cells, dim, cellSize, selectedIdx, related, sameNum,
+  cells, dim, cellSize, colors, selectedIdx, related, sameNum,
   isPaused, showMistakes, anims, onCell,
 }: BoardProps) => {
   const getAnim = (i: number) => {
@@ -89,21 +90,26 @@ const Board = React.memo(({
   };
 
   const getCellBg = (cell: SudokuCell, idx: number) => {
-    if (cell.isError && showMistakes) return D.errBg;
-    if (idx === selectedIdx)          return D.sel;
-    if (sameNum.has(idx))             return D.sameNum;
-    if (related.has(idx))             return D.related;
-    return '#ffffff';
+    if (cell.isError && showMistakes) return colors.bgCellError;
+    if (idx === selectedIdx)          return colors.bgCellSelected;
+    if (sameNum.has(idx))             return colors.bgCellSameNumber;
+    if (related.has(idx))             return colors.bgCellHighlight;
+    return cell.isGiven ? colors.bgCellGiven : colors.bgCellDefault;
   };
 
   const noteSize = Math.max(7, Math.floor(cellSize * 0.22));
 
   return (
-    <View style={[S.boardOuter, { width: dim + BOARD_OUTER * 2, height: dim + BOARD_OUTER * 2 }]}>
+    <View style={[S.boardOuter, {
+      width: dim + BOARD_OUTER * 2,
+      height: dim + BOARD_OUTER * 2,
+      borderColor: colors.borderBoard,
+      backgroundColor: colors.borderBoard,
+    }]}>
       {/* ── Cells (no individual borders) ── */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', width: dim, height: dim }}>
         {cells.map((cell, idx) => {
-          const numClr = (cell.isError && showMistakes) ? D.numErr : cell.isGiven ? D.numGiven : D.numUser;
+          const numClr = (cell.isError && showMistakes) ? colors.textError : cell.isGiven ? colors.textGiven : colors.textInput;
           return (
             <Animated.View key={idx} style={{ transform: [{ scale: getAnim(idx) }] }}>
               <TouchableOpacity
@@ -130,7 +136,7 @@ const Board = React.memo(({
                       <Text key={n} style={{
                         width: '33.33%', textAlign: 'center',
                         fontSize: noteSize, lineHeight: noteSize + 4,
-                        color: D.noteClr, includeFontPadding: false,
+                        color: colors.textSecondary, includeFontPadding: false,
                       }}>
                         {cell.notes?.includes(n) ? n : ''}
                       </Text>
@@ -153,7 +159,7 @@ const Board = React.memo(({
             left: col * cellSize + BOARD_OUTER - lw / 2,
             top: BOARD_OUTER, bottom: BOARD_OUTER,
             width: lw,
-            backgroundColor: thick ? D.boxLine : D.cellLine,
+            backgroundColor: thick ? colors.borderBox : colors.borderCell,
           }} />
         );
       })}
@@ -168,7 +174,7 @@ const Board = React.memo(({
             top: row * cellSize + BOARD_OUTER - lh / 2,
             left: BOARD_OUTER, right: BOARD_OUTER,
             height: lh,
-            backgroundColor: thick ? D.boxLine : D.cellLine,
+            backgroundColor: thick ? colors.borderBox : colors.borderCell,
           }} />
         );
       })}
@@ -344,6 +350,7 @@ export const GameScreen: React.FC = () => {
       <View style={{ alignItems: 'center', marginBottom: 8 }}>
         <Board
           cells={cells} dim={boardDim} cellSize={cellSize}
+          colors={colors}
           selectedIdx={selectedIdx} related={related} sameNum={sameNum}
           isPaused={isPaused} showMistakes={settings.showMistakes}
           anims={anims}
@@ -369,7 +376,7 @@ export const GameScreen: React.FC = () => {
                 <TouchableOpacity
                   onPress={() => useStore.getState().enterNumber(n)}
                   disabled={isPaused} activeOpacity={0.6}
-                  style={[S.numBtn, { width: numBtnW, height: numBtnH, backgroundColor: D.numPadBg, borderColor: D.numPadBdr }]}
+                  style={[S.numBtn, { width: numBtnW, height: numBtnH, backgroundColor: colors.bgSurfaceContainerLowest, borderColor: colors.outlineVariant }]}
                 >
                   <Text style={[S.numTxt, { color: colors.textPrimary }]}>{n}</Text>
                 </TouchableOpacity>

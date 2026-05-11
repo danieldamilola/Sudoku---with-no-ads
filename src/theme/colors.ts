@@ -143,9 +143,9 @@ export const darkColors = {
   outline:                    '#6f6f78',
   outlineVariant:             '#343438',
   border:                     '#343438',
-  borderCell:                 '#343438',
-  borderBox:                  '#f5f5f0',
-  borderBoard:                '#f5f5f0',
+  borderCell:                 '#29292c',
+  borderBox:                  '#3a3a3d',
+  borderBoard:                '#3a3a3d',
 
   surfaceTint:                '#748ffc',
 
