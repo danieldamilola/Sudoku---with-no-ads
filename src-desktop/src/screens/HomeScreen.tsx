@@ -114,6 +114,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             type="button"
             onClick={onNavigateGame}
             aria-label={`Continue ${DIFF[difficulty].tier} puzzle — ${completion}% complete`}
+            style={{ marginBottom: 40 }}
           >
             <div className="continue-left">
               <div className="continue-heading">Continue</div>
@@ -140,7 +141,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
 
         {/* ── Difficulty grid ── */}
-        <section className="difficulty-grid">
+        <section className="difficulty-grid" style={{ marginBottom: 32 }}>
           {visible.map((id) => {
             const item = DIFF[id];
             const isUnlocked = settings.unlockedDifficulties.includes(id);

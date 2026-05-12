@@ -333,8 +333,8 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
 
         {/* Players list */}
         <div>
-          <div className="control-label" style={{ marginBottom: 10 }}>Players</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="control-label" style={{ marginBottom: 12 }}>Players</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {lobby.players.map((p) => (
               <PlayerCard key={p.userId} player={p} isMe={p.userId === user?.id} />
             ))}
@@ -344,18 +344,17 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
         {/* Waiting room host controls */}
         {phase === 'waiting' && isHost && (
           <div style={{ marginTop: 'auto' }}>
-            <div className="control-label" style={{ marginBottom: 10 }}>Difficulty</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 16 }}>
+            <div className="control-label" style={{ marginBottom: 12 }}>Difficulty</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 24 }}>
               {ALL_DIFFICULTIES.map((d) => {
-                const color = DIFF_ACCENT[d];
                 const active = hostDifficulty === d;
                 return (
                   <button key={d} type="button" onClick={() => setHostDifficulty(d)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, border: `1.5px solid ${active ? color : 'var(--line)'}`, background: active ? color + '15' : 'transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 120ms' }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: active ? 700 : 600, color: active ? 'var(--ink)' : 'var(--muted)' }}>
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 120ms', width: '100%' }}>
+                    <span style={{ fontSize: 14, fontWeight: active ? 700 : 600, color: active ? 'var(--ink)' : 'var(--muted)' }}>
                       {d.charAt(0).toUpperCase() + d.slice(1)}
                     </span>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--ink)' : 'var(--line)', transition: 'background 120ms' }} />
                   </button>
                 );
               })}
@@ -366,7 +365,7 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
           </div>
         )}
         {phase === 'waiting' && !isHost && (
-          <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, textAlign: 'center', marginTop: 'auto' }}>
+          <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, textAlign: 'center', marginTop: 'auto', padding: '0 16px' }}>
             Host will start soon…
           </p>
         )}
@@ -375,12 +374,12 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
       {/* ── Board ── */}
       <section className="game-main" style={{ position: 'relative' }}>
         {phase === 'waiting' ? (
-          <div style={{ textAlign: 'center', padding: 24 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', fontSize: 24 }}>⏳</div>
-            <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+          <div style={{ textAlign: 'center', padding: 32 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 16, background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 28 }}>⏳</div>
+            <h2 style={{ margin: '0 0 12px', fontSize: 24, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
               {isHost ? 'Your room is ready' : 'Waiting to start'}
             </h2>
-            <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--muted)', lineHeight: 1.6, maxWidth: 300 }}>
+            <p style={{ margin: '0 0 24px', fontSize: 15, color: 'var(--muted)', lineHeight: 1.6, maxWidth: 340 }}>
               {isHost
                 ? 'Friends join with the code shown in the header. Pick a difficulty and start when ready.'
                 : 'The host will start the game. Everyone gets the same puzzle.'}
@@ -411,7 +410,7 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
 
       {/* ── Right Panel: controls ── */}
       <aside className="game-inspector">
-        <div className="control-section">
+        <div className="control-section" style={{ marginBottom: 24 }}>
           <div className="control-label">Tools</div>
           <div className="tool-grid">
             {settings.allowUndo && (
@@ -426,7 +425,7 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
         </div>
 
         {settings.allowHints && (
-          <div className="control-section">
+          <div className="control-section" style={{ marginBottom: 24 }}>
             <div className="control-label">Assistance</div>
             <button className="hint-button" type="button" onClick={handleHint} disabled={finished || phase !== 'playing' || hintsLeft <= 0}>
               <Lightbulb size={18} /> Hint ({hintsLeft} left)
@@ -476,19 +475,19 @@ const PlayerCard: React.FC<{ player: LobbyPlayer; isMe: boolean }> = ({ player, 
   const pct = Math.round((player.progress / 81) * 100);
   const done = player.finishedAt !== null;
   return (
-    <div style={{ padding: '10px 12px', borderRadius: 10, border: `1px solid ${isMe ? 'var(--line-strong)' : 'var(--line)'}`, background: isMe ? 'var(--surface)' : 'transparent' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-        {player.isHost && <Crown size={11} color="#f5a623" strokeWidth={2} />}
-        <span style={{ fontSize: 13, fontWeight: isMe ? 800 : 600, color: done ? 'var(--green)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+    <div style={{ padding: '14px 16px', borderRadius: 10, border: `1px solid ${isMe ? 'var(--line-strong)' : 'var(--line)'}`, background: isMe ? 'var(--surface)' : 'transparent' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        {player.isHost && <Crown size={12} color="#f5a623" strokeWidth={2} />}
+        <span style={{ fontSize: 14, fontWeight: isMe ? 800 : 600, color: done ? 'var(--green)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
           {player.displayName}
           {isMe && <span style={{ fontWeight: 600, color: 'var(--muted)' }}> (you)</span>}
         </span>
         {done
-          ? <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Done</span>
-          : <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+          ? <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Done</span>
+          : <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
         }
       </div>
-      <div style={{ height: 3, borderRadius: 999, background: 'var(--surface-container)' }}>
+      <div style={{ height: 4, borderRadius: 999, background: 'var(--surface-container)' }}>
         <div style={{ height: '100%', borderRadius: 999, background: done ? 'var(--green)' : isMe ? 'var(--blue)' : 'var(--line-strong)', width: `${pct}%`, transition: 'width 0.5s ease' }} />
       </div>
     </div>
@@ -530,9 +529,9 @@ const FinishedState: React.FC<{ myPlayer: LobbyPlayer | undefined; lobby: Lobby;
       </div>
 
       {/* Leaderboard — no opponent mistakes shown */}
-      <div style={{ border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden', marginBottom: 24 }}>
+      <div style={{ border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden', marginBottom: 28 }}>
         {sorted.map((p, rank) => (
-          <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px', borderBottom: rank < sorted.length - 1 ? '1px solid var(--line)' : 'none', background: p.userId === myPlayer?.userId ? 'var(--blue-wash)' : 'transparent' }}>
+          <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: rank < sorted.length - 1 ? '1px solid var(--line)' : 'none', background: p.userId === myPlayer?.userId ? 'var(--blue-wash)' : 'transparent' }}>
             <span style={{ fontSize: 18, flexShrink: 0 }}>{rank < 3 ? RANK_MEDAL[rank] : `#${rank + 1}`}</span>
             <span style={{ flex: 1, fontWeight: p.userId === myPlayer?.userId ? 800 : 600, fontSize: 14, color: 'var(--ink)', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {p.displayName}{p.userId === myPlayer?.userId ? ' (you)' : ''}

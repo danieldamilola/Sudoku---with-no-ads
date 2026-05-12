@@ -24,7 +24,7 @@ export const ProfileScreen: React.FC = () => {
     <main className="screen">
       <div className="screen-inner">
         {/* ── Identity ── */}
-        <section style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 36 }}>
+        <section style={{ display: "flex", alignItems: "center", gap: 28, marginBottom: 48 }}>
           <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <span style={{ color: "var(--bg)", fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em" }}>
               {initial}
@@ -64,7 +64,7 @@ export const ProfileScreen: React.FC = () => {
         <div className="section-head">
           <span className="section-head-title">Your Stats</span>
         </div>
-        <div className="stat-grid" style={{ marginBottom: 32 }}>
+        <div className="stat-grid" style={{ marginBottom: 40 }}>
           <div className="stat-card">
             <div className="stat-value">{stats.totalCompleted}</div>
             <div className="stat-label">Solved</div>
@@ -83,7 +83,7 @@ export const ProfileScreen: React.FC = () => {
         <div className="section-head">
           <span className="section-head-title">Data</span>
         </div>
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 48 }}>
           <button
             type="button"
             onClick={() => { if (confirm("Reset all stats? This cannot be undone.")) resetStats(); }}
@@ -94,7 +94,7 @@ export const ProfileScreen: React.FC = () => {
           </button>
         </div>
 
-        <p style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", marginTop: 24 }}>
+        <p style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", marginTop: 32 }}>
           Sudoku 1.5.0
         </p>
       </div>
