@@ -51,12 +51,9 @@ export const BottomTabBar: React.FC<Props> = ({ active }) => {
       {
         backgroundColor: colors.bgSurface,
         paddingBottom:   Math.max(insets.bottom, 10),
-        // Light: soft shadow lifts the bar. Dark: hairline border instead.
-        borderTopWidth:  isDark ? StyleSheet.hairlineWidth : 0,
+        // Premium-minimal: always use a hairline stroke, no shadow.
+        borderTopWidth:  StyleSheet.hairlineWidth,
         borderTopColor:  colors.outlineVariant,
-        shadowColor:     '#000',
-        shadowOpacity:   isDark ? 0 : 0.07,
-        elevation:       isDark ? 0 : 10,
       },
     ]}>
       {TABS.map(({ name, label, LIcon }) => {
@@ -87,8 +84,6 @@ export const BottomTabBar: React.FC<Props> = ({ active }) => {
 const S = StyleSheet.create({
   bar: {
     flexDirection:  'row',
-    shadowOffset:   { width: 0, height: -3 },
-    shadowRadius:   12,
   },
   tab: {
     flex:           1,

@@ -1,52 +1,33 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 interface BrandMarkProps {
   size?: number;
   color?: string;
 }
 
-const CELLS = [
-  [20, 4],
-  [10, 12],
-  [30, 12],
-  [20, 22],
-  [10, 32],
-  [30, 32],
-  [20, 40],
-] as const;
+const BRAND_LOGO = require('../../Sudoku logo 2.jpg');
 
 export const BrandMark: React.FC<BrandMarkProps> = ({ size = 28, color = '#111111' }) => {
-  const scale = size / 48;
-  const cellSize = 8 * scale;
-
+  void color;
   return (
-    <View style={[styles.root, { width: size, height: size }]} accessibilityRole="image" accessibilityLabel="Sudoku">
-      {CELLS.map(([x, y]) => (
-        <View
-          key={`${x}-${y}`}
-          style={[
-            styles.cell,
-            {
-              width: cellSize,
-              height: cellSize,
-              borderRadius: Math.max(1, 1.2 * scale),
-              backgroundColor: color,
-              left: x * scale,
-              top: y * scale,
-            },
-          ]}
-        />
-      ))}
+    <View style={[styles.root, { width: size, height: size }]} accessibilityRole="image" accessibilityLabel="Sudoku logo">
+      <Image
+        source={BRAND_LOGO}
+        style={styles.image}
+        resizeMode="contain"
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   root: {
-    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cell: {
-    position: 'absolute',
+  image: {
+    width: '100%',
+    height: '100%',
   },
 });

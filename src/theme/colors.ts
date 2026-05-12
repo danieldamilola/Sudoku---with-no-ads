@@ -1,204 +1,235 @@
-// ─── Sudoku App Color Palette (matches desktop design) ──────────────────────
+// ─── Sudoku App Color Palette ──────────────────────────────────────────────
+// Aligned with UX plan token contract (shared with desktop index.css)
+// Token names: https://ux_plan.md Section 1
+
 export const lightColors = {
-  // Page & Surface
-  bgPage:                     '#fcf8fb',
-  bgSurface:                  '#ffffff',
-  bgSurfaceDim:               '#f6f3f5',
-  bgSurfaceBright:            '#ffffff',
-  bgSurfaceContainerLowest:   '#ffffff',
-  bgSurfaceContainerLow:      '#fcf8fb',
-  bgSurfaceContainer:         '#f0edef',
-  bgSurfaceContainerHigh:     '#f6f3f5',
-  bgSurfaceContainerHighest:  '#e4e2e4',
-  bgSurfaceVariant:           '#f0edef',
+  // ── Page & Surface ──────────────────────────────────────────────────────
+  bgPage: "#f4f5f6", // bg-page
+  bgSurface: "#ffffff", // bg-surface
+  bgSurfaceDim: "#eef0f2",
+  bgSurfaceBright: "#ffffff",
+  bgSurfaceContainerLowest: "#ffffff",
+  bgSurfaceContainerLow: "#f7f5f2",
+  bgSurfaceContainer: "#e7eaee", // bg-container
+  bgSurfaceContainerHigh: "#edf0f3",
+  bgSurfaceContainerHighest: "#d8dde3",
+  bgSurfaceVariant: "#e7eaee",
 
-  // Text
-  textPrimary:                '#1b1b1d',
-  textSecondary:              '#444654',
-  textOnSurface:              '#1b1b1d',
-  textOnSurfaceVariant:       '#444654',
+  // ── Text ────────────────────────────────────────────────────────────────
+  textPrimary: "#18171a", // ink
+  textSecondary: "#626874", // muted
+  textOnSurface: "#18171a",
+  textOnSurfaceVariant: "#52505a",
 
-  // Primary – Indigo Blue
-  primary:                    '#274ed5',
-  onPrimary:                  '#ffffff',
-  primaryContainer:           '#4669f0',
-  onPrimaryContainer:         '#ffffff',
-  primaryFixed:               '#dce3ff',
-  primaryFixedDim:            '#c5d0ff',
-  onPrimaryFixed:             '#1a3299',
-  onPrimaryFixedVariant:      '#2b47c9',
-  inversePrimary:             '#c5d0ff',
+  // ── Primary – Indigo Blue (accent) ──────────────────────────────────────
+  primary: "#111317", // accent
+  onPrimary: "#ffffff",
+  primaryContainer: "#2a2f38", // accent-strong
+  onPrimaryContainer: "#ffffff",
+  primaryFixed: "#eceff3", // accent-wash
+  primaryFixedDim: "#d8dde3",
+  onPrimaryFixed: "#111317", // accent-strong
+  onPrimaryFixedVariant: "#2a2f38",
+  inversePrimary: "#d8dde3",
 
-  // Secondary – Green
-  secondary:                  '#34c759',
-  onSecondary:                '#ffffff',
-  secondaryContainer:         '#d1fae5',
-  onSecondaryContainer:       '#137333',
-  secondaryFixed:             '#d1fae5',
-  secondaryFixedDim:          '#8ce99a',
-  onSecondaryFixed:           '#0a3d1a',
-  onSecondaryFixedVariant:    '#1e6f30',
+  // ── Secondary – Green ────────────────────────────────────────────────────
+  secondary: "#1a7a40", // green
+  onSecondary: "#ffffff",
+  secondaryContainer: "#d4f0e0",
+  onSecondaryContainer: "#1a7a40",
+  secondaryFixed: "#d4f0e0",
+  secondaryFixedDim: "#a8e6b8",
+  onSecondaryFixed: "#0d4d1a",
+  onSecondaryFixedVariant: "#1a7a40",
 
-  // Tertiary – Amber
-  tertiary:                   '#845000',
-  onTertiary:                 '#ffffff',
-  tertiaryContainer:          '#ffddbb',
-  onTertiaryContainer:        '#7d4000',
-  tertiaryFixed:              '#ffddbb',
-  tertiaryFixedDim:           '#ffd43b',
-  onTertiaryFixed:            '#4a2400',
-  onTertiaryFixedVariant:     '#7d4000',
+  // ── Tertiary – Amber/Orange ──────────────────────────────────────────────
+  tertiary: "#a04f00", // orange
+  onTertiary: "#ffffff",
+  tertiaryContainer: "#fde8cc",
+  onTertiaryContainer: "#a04f00",
+  tertiaryFixed: "#fde8cc",
+  tertiaryFixedDim: "#fcd49d",
+  onTertiaryFixed: "#5c2a00",
+  onTertiaryFixedVariant: "#a04f00",
 
-  // Error
-  error:                      '#ba1a1a',
-  onError:                    '#ffffff',
-  errorContainer:             '#ffdad6',
-  onErrorContainer:           '#8b0000',
+  // ── Error – Red ──────────────────────────────────────────────────────────
+  error: "#c0180f", // red
+  onError: "#ffffff",
+  errorContainer: "#fde4e2", // red-wash
+  onErrorContainer: "#c0180f",
 
-  // Borders
-  outline:                    '#c4c5d7',
-  outlineVariant:             '#dcd9dc',
-  border:                     '#dcd9dc',
-  borderCell:                 '#dcd9dc',
-  borderBox:                  '#1a1a1a',
-  borderBoard:                '#1a1a1a',
+  // ── Purple (master difficulty) ───────────────────────────────────────────
+  purple: "#6b30d4",
+  purpleWash: "#ede6fc",
 
-  // Surface Tint
-  surfaceTint:                '#274ed5',
+  // ── Borders ──────────────────────────────────────────────────────────────
+  outline: "#aeb5bf",
+  outlineVariant: "#d8dde3", // line
+  border: "#d8dde3",
+  borderCell: "#d8dde3",
+  borderBox: "#aeb5bf", // line-strong
+  borderBoard: "#aeb5bf",
 
-  // Inverse
-  inverseSurface:             '#303032',
-  inverseOnSurface:           '#fcf8fb',
+  // ── Surface Tint ─────────────────────────────────────────────────────────
+  surfaceTint: "#111317",
 
-  // Cell States
-  bgCellDefault:              '#ffffff',
-  bgCellGiven:                '#ffffff',
-  bgCellSelected:             '#4669f0',
-  bgCellHighlight:            '#dce3ff',
-  bgCellError:                '#ffdad6',
-  bgCellSameNumber:           '#c2d0fb',
+  // ── Inverse ──────────────────────────────────────────────────────────────
+  inverseSurface: "#303032",
+  inverseOnSurface: "#f7f5f2",
 
-  // Text States
-  textGiven:                  '#1b1b1d',
-  textInput:                  '#1b1b1d',
-  textError:                  '#ba1a1a',
+  // ── Cell States ──────────────────────────────────────────────────────────
+  bgCellDefault: "#ffffff",
+  bgCellGiven: "#ffffff",
+  bgCellSelected: "#3650d4", // accent
+  bgCellHighlight: "#e8edfb", // accent-wash
+  bgCellError: "#fde4e2", // red-wash
+  bgCellSameNumber: "#c2ccf5",
 
-  // Aliases
-  accent:                     '#274ed5',
-  accentDim:                  '#dce3ff',
-  success:                    '#34c759',
-  warning:                    '#845000',
+  // ── Text States ──────────────────────────────────────────────────────────
+  textGiven: "#18171a",
+  textInput: "#3650d4",
+  textError: "#c0180f",
+
+  // ── Sematic Aliases ──────────────────────────────────────────────────────
+  accent: "#111317",
+  accentDim: "#eceff3",
+  accentStrong: "#2a2f38",
+  success: "#1a7a40",
+  warning: "#a04f00",
+  faint: "#7a7882",
+  line: "#e0ddd9",
+  lineStrong: "#bfbcba",
 };
 
 export const darkColors = {
-  bgPage:                     '#0e0e0e',
-  bgSurface:                  '#161616',
-  bgSurfaceDim:               '#1a1a1a',
-  bgSurfaceBright:            '#202020',
-  bgSurfaceContainerLowest:   '#0e0e0e',
-  bgSurfaceContainerLow:      '#161616',
-  bgSurfaceContainer:         '#202020',
-  bgSurfaceContainerHigh:     '#272727',
-  bgSurfaceContainerHighest:  '#303030',
-  bgSurfaceVariant:           '#404040',
+  // ── Page & Surface ──────────────────────────────────────────────────────
+  bgPage: "#0e0e0e", // bg-page
+  bgSurface: "#161616", // bg-surface
+  bgSurfaceDim: "#1a1a1a",
+  bgSurfaceBright: "#202020",
+  bgSurfaceContainerLowest: "#0e0e0e",
+  bgSurfaceContainerLow: "#161616",
+  bgSurfaceContainer: "#202020", // bg-container
+  bgSurfaceContainerHigh: "#272727",
+  bgSurfaceContainerHighest: "#303030",
+  bgSurfaceVariant: "#2c2c2c",
 
-  textPrimary:                '#f2f2f2',
-  textSecondary:              '#9a9a9a',
-  textOnSurface:              '#f2f2f2',
-  textOnSurfaceVariant:       '#9a9a9a',
+  // ── Text ────────────────────────────────────────────────────────────────
+  textPrimary: "#f2f2f2", // ink
+  textSecondary: "#9a9a9a", // muted
+  textOnSurface: "#f2f2f2",
+  textOnSurfaceVariant: "#9a9a9a",
 
-  primary:                    '#a0b4ff',
-  onPrimary:                  '#0e0e0e',
-  primaryContainer:           '#5b7eff',
-  onPrimaryContainer:         '#f2f2f2',
-  primaryFixed:               '#171f42',
-  primaryFixedDim:            '#202a5a',
-  onPrimaryFixed:             '#a0b4ff',
-  onPrimaryFixedVariant:      '#a0b4ff',
-  inversePrimary:             '#274ed5',
+  // ── Primary – Indigo Blue (accent) ──────────────────────────────────────
+  primary: "#f2f2f2", // accent
+  onPrimary: "#0b0d10",
+  primaryContainer: "#d8dde3", // accent-strong
+  onPrimaryContainer: "#0b0d10",
+  primaryFixed: "#202531", // accent-wash
+  primaryFixedDim: "#2a3040",
+  onPrimaryFixed: "#f2f2f2",
+  onPrimaryFixedVariant: "#d8dde3",
+  inversePrimary: "#111317",
 
-  secondary:                  '#5ee577',
-  onSecondary:                '#0a3d1a',
-  secondaryContainer:         '#137333',
-  onSecondaryContainer:       '#d1fae5',
-  secondaryFixed:             '#d1fae5',
-  secondaryFixedDim:          '#8ce99a',
-  onSecondaryFixed:           '#0a3d1a',
-  onSecondaryFixedVariant:    '#137333',
+  // ── Secondary – Green ────────────────────────────────────────────────────
+  secondary: "#5ee577", // green
+  onSecondary: "#0d1a0a",
+  secondaryContainer: "#0d2a1a",
+  onSecondaryContainer: "#d4f0e0",
+  secondaryFixed: "#d4f0e0",
+  secondaryFixedDim: "#8ce99a",
+  onSecondaryFixed: "#0d4d1a",
+  onSecondaryFixedVariant: "#5ee577",
 
-  tertiary:                   '#ffc779',
-  onTertiary:                 '#7d4000',
-  tertiaryContainer:          '#7d4000',
-  onTertiaryContainer:        '#ffddbb',
-  tertiaryFixed:              '#ffddbb',
-  tertiaryFixedDim:           '#ffd43b',
-  onTertiaryFixed:            '#4a2400',
-  onTertiaryFixedVariant:     '#7d4000',
+  // ── Tertiary – Amber/Orange ──────────────────────────────────────────────
+  tertiary: "#ffc779", // orange
+  onTertiary: "#5c2a00",
+  tertiaryContainer: "#3a2611",
+  onTertiaryContainer: "#fde8cc",
+  tertiaryFixed: "#fde8cc",
+  tertiaryFixedDim: "#ffd43b",
+  onTertiaryFixed: "#5c2a00",
+  onTertiaryFixedVariant: "#ffc779",
 
-  error:                      '#ff7b7b',
-  onError:                    '#4a0000',
-  errorContainer:             '#3a1214',
-  onErrorContainer:           '#ffdad6',
+  // ── Error – Red ──────────────────────────────────────────────────────────
+  error: "#ff7b7b", // red
+  onError: "#4a0000",
+  errorContainer: "#3a1214", // red-wash
+  onErrorContainer: "#fde4e2",
 
-  outline:                    '#747474',
-  outlineVariant:             '#404040',
-  border:                     '#2c2c2c',
-  borderCell:                 '#2c2c2c',
-  borderBox:                  '#5a5a5a',
-  borderBoard:                '#404040',
+  // ── Purple (master difficulty) ───────────────────────────────────────────
+  purple: "#c49dff",
+  purpleWash: "#1e1030",
 
-  surfaceTint:                '#748ffc',
+  // ── Borders ──────────────────────────────────────────────────────────────
+  outline: "#5f6775",
+  outlineVariant: "#2a3040",
+  border: "#202531", // line
+  borderCell: "#202531",
+  borderBox: "#2a3040", // line-strong
+  borderBoard: "#2a3040",
 
-  inverseSurface:             '#f2f2f2',
-  inverseOnSurface:           '#0e0e0e',
+  // ── Surface Tint ─────────────────────────────────────────────────────────
+  surfaceTint: "#f2f2f2",
 
-  bgCellDefault:              '#111111',
-  bgCellGiven:                '#111111',
-  bgCellSelected:             '#5b7eff',
-  bgCellHighlight:            '#171f42',
-  bgCellError:                '#3a1214',
-  bgCellSameNumber:           '#1e2d5c',
+  // ── Inverse ──────────────────────────────────────────────────────────────
+  inverseSurface: "#f2f2f2",
+  inverseOnSurface: "#0e0e0e",
 
-  textGiven:                  '#f2f2f2',
-  textInput:                  '#a0b4ff',
-  textError:                  '#ff7b7b',
+  // ── Cell States ──────────────────────────────────────────────────────────
+  bgCellDefault: "#111111",
+  bgCellGiven: "#111111",
+  bgCellSelected: "#5b7eff", // accent-strong
+  bgCellHighlight: "#171f42", // accent-wash
+  bgCellError: "#3a1214", // red-wash
+  bgCellSameNumber: "#1e2d5c",
 
-  accent:                     '#a0b4ff',
-  accentDim:                  '#171f42',
-  success:                    '#5ee577',
-  warning:                    '#ffc779',
+  // ── Text States ──────────────────────────────────────────────────────────
+  textGiven: "#f2f2f2",
+  textInput: "#a0b4ff",
+  textError: "#ff7b7b",
+
+  // ── Semantic Aliases ─────────────────────────────────────────────────────
+  accent: "#f2f2f2",
+  accentDim: "#202531",
+  accentStrong: "#d8dde3",
+  success: "#5ee577",
+  warning: "#ffc779",
+  faint: "#747474",
+  line: "#2c2c2c",
+  lineStrong: "#404040",
 };
 
 export const Colors = {
   // Light defaults
-  bgPage:           lightColors.bgPage,
-  bgSurface:        lightColors.bgSurface,
-  bgCellDefault:    lightColors.bgCellDefault,
-  bgCellSelected:   lightColors.bgCellSelected,
-  bgCellHighlight:  lightColors.bgCellHighlight,
-  bgCellGiven:      lightColors.bgCellGiven,
-  bgCellError:      lightColors.bgCellError,
-  textPrimary:      lightColors.textPrimary,
-  textSecondary:    lightColors.textSecondary,
-  textGiven:        lightColors.textGiven,
-  textInput:        lightColors.textInput,
-  textError:        lightColors.textError,
-  accent:           lightColors.accent,
-  accentDim:        lightColors.accentDim,
-  success:          lightColors.success,
-  error:            lightColors.error,
-  warning:          lightColors.warning,
-  borderCell:       lightColors.borderCell,
-  borderBox:        lightColors.borderBox,
-  borderBoard:      lightColors.borderBoard,
+  bgPage: lightColors.bgPage,
+  bgSurface: lightColors.bgSurface,
+  bgCellDefault: lightColors.bgCellDefault,
+  bgCellSelected: lightColors.bgCellSelected,
+  bgCellHighlight: lightColors.bgCellHighlight,
+  bgCellGiven: lightColors.bgCellGiven,
+  bgCellError: lightColors.bgCellError,
+  textPrimary: lightColors.textPrimary,
+  textSecondary: lightColors.textSecondary,
+  textGiven: lightColors.textGiven,
+  textInput: lightColors.textInput,
+  textError: lightColors.textError,
+  accent: lightColors.accent,
+  accentDim: lightColors.accentDim,
+  success: lightColors.success,
+  error: lightColors.error,
+  warning: lightColors.warning,
+  borderCell: lightColors.borderCell,
+  borderBox: lightColors.borderBox,
+  borderBoard: lightColors.borderBoard,
 
   // Difficulty colors matching desktop design
-  easyColor:        '#34c759',
-  easyBg:           '#d1fae5',
-  mediumColor:      '#274ed5',
-  mediumBg:         '#dbeafe',
-  hardColor:        '#845000',
-  hardBg:           '#ffddbb',
-  expertColor:      '#ba1a1a',
-  expertBg:         '#ffdad6',
+  easyColor: "#1a7a40",
+  easyBg: "#d4f0e0",
+  mediumColor: "#3650d4",
+  mediumBg: "#e8edfb",
+  hardColor: "#a04f00",
+  hardBg: "#fde8cc",
+  expertColor: "#c0180f",
+  expertBg: "#fde4e2",
 } as const;

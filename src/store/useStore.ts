@@ -3,9 +3,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Difficulty, GameState, GameSettings, GameStats, GameRecord, GameSnapshot, SudokuCell } from '../types';
 import { SudokuGenerator, SudokuValidator } from '../utils/sudoku';
 import * as Haptics from 'expo-haptics';
+import { pushStats, pushSettings, pushActiveGame, initialSync, subscribeToStats, subscribeToSettings } from '../lib/sync';
+
+let _unsubscribeRealtime: (() => void) | null = null;
 
 // Module-level singleton so React StrictMode double-mount never creates 2 intervals
 let _timerInterval: ReturnType<typeof setInterval> | null = null;
+let _persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+export const MAX_SECOND_CHANCES = 3;
 
 const defaultSettings: GameSettings = {
   darkMode: false,
@@ -22,6 +28,8 @@ const defaultSettings: GameSettings = {
 
 const defaultStats: GameStats = {
   totalCompleted: 0,
+  gamesWon: 0,
+  winsByDifficulty: {},
   currentStreak: 0,
   bestStreak: 0,
   totalMinutesPlayed: 0,
@@ -29,7 +37,8 @@ const defaultStats: GameStats = {
   recentGames: [],
 };
 
-const STORAGE_KEY = 'sudoku-storage';
+const GUEST_STORAGE_KEY = 'sudoku-guest-storage';
+const userStorageKey = (userId: string) => `sudoku-user-storage:${userId}`;
 
 const createSnapshot = (state: GameState): GameSnapshot => ({
   cells: state.cells.map((cell) => ({
@@ -44,7 +53,6 @@ const createSnapshot = (state: GameState): GameSnapshot => ({
   notesMode: state.notesMode,
 });
 
-const MAX_SECOND_CHANCES = 3;
 const POINTS_PER_CELL: Record<string, number> = {
   beginner: 5,
   skill: 10,
@@ -61,6 +69,19 @@ interface GameStore extends GameState {
   isFailed: boolean;
   secondChancesUsed: number;
   livePoints: number;
+  // Sync
+  syncEnabled: boolean;
+  activeUserId: string | null;
+  dataMode: 'guest' | 'account';
+  syncToCloud: (userId: string) => Promise<void>;
+  syncFromCloud: (userId: string) => Promise<void>;
+  applyCloudSync: (remoteStats: GameStats, remoteSettings: GameSettings) => void;
+  enableSync: (userId: string) => Promise<void>;
+  disableSync: () => void;
+  syncAfterGame: () => Promise<void>;
+  pushActiveGameToCloud: () => Promise<void>;
+  switchToGuest: () => Promise<void>;
+  switchToAccount: (userId: string) => Promise<void>;
 
   startNewGame: (difficulty: Difficulty) => void;
   selectCell: (index: number) => void;
@@ -116,13 +137,225 @@ export const useStore = create<GameStore>()(
       isFailed: false,
       secondChancesUsed: 0,
       livePoints: 0,
-      startTime: null as Date | null,
+      startTime: null as string | null,
       selectedCellIndex: null as number | null,
       notesMode: false,
       moveHistory: [] as GameSnapshot[],
       settings: defaultSettings,
       stats: defaultStats,
-      
+      syncEnabled: false,
+      activeUserId: null,
+      dataMode: 'guest',
+
+      syncToCloud: async (userId: string) => {
+        const state = get();
+        await Promise.all([
+          pushStats(userId, state.stats),
+          pushSettings(userId, state.settings),
+          pushActiveGame(userId, state),
+        ]);
+      },
+
+      applyCloudSync: (remoteStats: GameStats, remoteSettings: GameSettings) => {
+        const local = get();
+        const localKeys = new Set(
+          local.stats.recentGames.map((g) => new Date(g.date).toISOString())
+        );
+        const mergedGames = [...local.stats.recentGames];
+        for (const g of remoteStats.recentGames ?? []) {
+          if (!localKeys.has(new Date(g.date).toISOString())) mergedGames.push(g);
+        }
+        set({
+          stats: {
+            ...local.stats,
+            totalCompleted: Math.max(local.stats.totalCompleted, remoteStats.totalCompleted),
+            gamesWon: Math.max(local.stats.gamesWon ?? 0, remoteStats.gamesWon ?? 0),
+            winsByDifficulty: {
+              ...remoteStats.winsByDifficulty,
+              ...local.stats.winsByDifficulty,
+            },
+            currentStreak: Math.max(local.stats.currentStreak, remoteStats.currentStreak),
+            bestStreak: Math.max(local.stats.bestStreak, remoteStats.bestStreak),
+            bestTimes: { ...remoteStats.bestTimes, ...local.stats.bestTimes },
+            recentGames: mergedGames.slice(-50),
+          },
+          settings: {
+            ...remoteSettings,
+            unlockedDifficulties: local.settings.unlockedDifficulties,
+          },
+        });
+      },
+
+      syncFromCloud: async (userId: string) => {
+        const { stats, settings, activeGame } = await initialSync(userId);
+        set({
+          stats,
+          settings,
+          ...(activeGame
+            ? {
+                cells: activeGame.cells ?? [],
+                solution: activeGame.solution ?? [],
+                difficulty: activeGame.difficulty ?? Difficulty.Beginner,
+                elapsedSeconds: activeGame.elapsedSeconds ?? 0,
+                mistakes: activeGame.mistakes ?? 0,
+                hintsUsed: activeGame.hintsUsed ?? 0,
+                isPaused: activeGame.isPaused ?? false,
+                isCompleted: activeGame.isCompleted ?? false,
+                selectedCellIndex: activeGame.selectedCellIndex ?? null,
+                notesMode: activeGame.notesMode ?? false,
+              }
+            : {
+                // Fresh account, no cloud game loaded
+                cells: [],
+                solution: [],
+                difficulty: Difficulty.Beginner,
+                elapsedSeconds: 0,
+                mistakes: 0,
+                hintsUsed: 0,
+                isPaused: false,
+                isCompleted: false,
+                selectedCellIndex: null,
+                notesMode: false,
+              }),
+        });
+      },
+
+      switchToGuest: async () => {
+        // persist current (account) state automatically via subscription
+        set({ dataMode: 'guest', activeUserId: null, syncEnabled: false });
+        const raw = await AsyncStorage.getItem(GUEST_STORAGE_KEY);
+        if (!raw) {
+          set({ settings: defaultSettings, stats: defaultStats, cells: [], solution: [] });
+          return;
+        }
+        const persistedState = JSON.parse(raw) as Partial<PersistedState>;
+        set((state) => ({
+          ...state,
+          ...persistedState,
+          settings: { ...defaultSettings, ...persistedState.settings },
+          stats: { ...defaultStats, ...persistedState.stats },
+          moveHistory: persistedState.moveHistory ?? [],
+        }));
+      },
+
+      switchToAccount: async (userId: string) => {
+        // Account always overwrites guest/local data (fresh account if no cloud data)
+        set({
+          dataMode: 'account',
+          activeUserId: userId,
+          cells: [],
+          solution: [],
+          difficulty: Difficulty.Beginner,
+          elapsedSeconds: 0,
+          mistakes: 0,
+          hintsUsed: 0,
+          isPaused: false,
+          isCompleted: false,
+          isFailed: false,
+          secondChancesUsed: 0,
+          livePoints: 0,
+          startTime: null,
+          selectedCellIndex: null,
+          notesMode: false,
+          moveHistory: [],
+          settings: defaultSettings,
+          stats: defaultStats,
+        });
+
+        // Load per-user local cache first (fast), then overwrite with cloud
+        const cached = await AsyncStorage.getItem(userStorageKey(userId));
+        if (cached) {
+          const persistedState = JSON.parse(cached) as Partial<PersistedState>;
+          set((state) => ({
+            ...state,
+            ...persistedState,
+            settings: { ...defaultSettings, ...persistedState.settings },
+            stats: { ...defaultStats, ...persistedState.stats },
+            moveHistory: persistedState.moveHistory ?? [],
+          }));
+        }
+
+        await get().syncFromCloud(userId);
+      },
+
+      enableSync: async (userId: string) => {
+        if (_unsubscribeRealtime) { _unsubscribeRealtime(); _unsubscribeRealtime = null; }
+        try {
+          const result = await initialSync(userId);
+          if (result) {
+            const isNewAccount =
+              result.stats.totalCompleted === 0 &&
+              Object.keys(result.stats.bestTimes).length === 0;
+            if (isNewAccount) {
+              // Brand new account — push local guest progress to cloud
+              await pushStats(userId, get().stats);
+              await pushSettings(userId, get().settings);
+            } else {
+              // Existing account — merge remote into local
+              get().applyCloudSync(result.stats, result.settings);
+            }
+            set({ syncEnabled: true });
+          }
+        } catch (e) {
+          console.warn('Sync pull failed, using local data:', e);
+        }
+        const unsubStats = subscribeToStats(userId, (remoteRow) => {
+          const s = get().stats;
+          set({
+            stats: {
+              ...s,
+              totalCompleted: remoteRow.games_played,
+              gamesWon: remoteRow.games_won,
+              currentStreak: remoteRow.current_streak,
+              bestStreak: remoteRow.best_streak,
+            },
+          });
+        });
+        const unsubSettings = subscribeToSettings(userId, (remoteRow) => {
+          const s = get().settings;
+          set({
+            settings: {
+              ...s,
+              darkMode: remoteRow.dark_mode,
+              showMistakes: remoteRow.show_mistakes,
+              highlightDuplicates: remoteRow.highlight_duplicates,
+              autoRemoveNotes: remoteRow.auto_remove_notes,
+              mistakeLimit: remoteRow.mistake_limit,
+              showTimer: remoteRow.show_timer,
+            },
+          });
+        });
+        _unsubscribeRealtime = () => { unsubStats(); unsubSettings(); };
+      },
+
+      syncAfterGame: async () => {
+        const state = get();
+        if (!state.activeUserId) return;
+        try {
+          await Promise.all([
+            pushStats(state.activeUserId, state.stats),
+            pushSettings(state.activeUserId, state.settings),
+          ]);
+        } catch (e) {
+          console.warn('Sync after game failed:', e);
+        }
+      },
+
+      pushActiveGameToCloud: async () => {
+        const state = get();
+        if (!state.activeUserId || state.cells.length === 0) return;
+        try {
+          await pushActiveGame(state.activeUserId, state);
+        } catch (e) {
+          console.warn('Active game push failed:', e);
+        }
+      },
+
+      disableSync: () => {
+        if (_unsubscribeRealtime) { _unsubscribeRealtime(); _unsubscribeRealtime = null; }
+        set({ syncEnabled: false });
+      },
+
       startNewGame: (difficulty: Difficulty) => {
         const { cells, solution } = SudokuGenerator.generatePuzzle(difficulty);
         set({
@@ -137,13 +370,13 @@ export const useStore = create<GameStore>()(
           isFailed: false,
           secondChancesUsed: 0,
           livePoints: 0,
-          startTime: new Date(),
+          startTime: new Date().toISOString(),
           selectedCellIndex: null,
           notesMode: false,
           moveHistory: [],
         });
       },
-      
+
       selectCell: (index: number) => {
         const { settings } = get();
         set({ selectedCellIndex: index });
@@ -151,34 +384,34 @@ export const useStore = create<GameStore>()(
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
       },
-      
+
       enterNumber: (number: number) => {
         const state = get();
         if (state.selectedCellIndex === null) return;
-        
+
         const cell = state.cells[state.selectedCellIndex];
         if (cell.isGiven) return;
-        
+
         const { settings } = get();
         const snapshot = createSnapshot(state);
-        
+
         // ── Notes mode ────────────────────────────────────────────────────────
         if (state.notesMode) {
           const notes = cell.notes ? [...cell.notes] : [];
           const noteIndex = notes.indexOf(number);
           if (noteIndex >= 0) notes.splice(noteIndex, 1);
           else notes.push(number);
-          
+
           const updatedCells = [...state.cells];
           updatedCells[state.selectedCellIndex] = {
             ...cell,
             notes: notes.length > 0 ? notes : null,
           };
-          set({ cells: updatedCells, moveHistory: [...(state.moveHistory ?? []), snapshot] });
+          set({ cells: updatedCells, moveHistory: [...(state.moveHistory ?? []), snapshot].slice(-50) });
           if (settings.hapticFeedback) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           return;
         }
-        
+
         // ── Normal mode ───────────────────────────────────────────────────────
         // Correctness is ALWAYS checked — showMistakes only controls visual display
         const isCorrect = state.solution[cell.row * 9 + cell.col] === number;
@@ -206,7 +439,7 @@ export const useStore = create<GameStore>()(
 
           set({
             cells: updatedCells,
-            moveHistory: [...(state.moveHistory ?? []), snapshot],
+            moveHistory: [...(state.moveHistory ?? []), snapshot].slice(-50),
             livePoints: (state.livePoints ?? 0) + pts,
           });
           if (settings.hapticFeedback) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -222,6 +455,7 @@ export const useStore = create<GameStore>()(
               mistakes: state.mistakes,
               won: true,
             });
+            get().syncAfterGame();
           }
         } else {
           // ── Incorrect entry ────────────────────────────────────────────────
@@ -229,7 +463,7 @@ export const useStore = create<GameStore>()(
           set({
             cells: updatedCells,
             mistakes: newMistakes,
-            moveHistory: [...(state.moveHistory ?? []), snapshot],
+            moveHistory: [...(state.moveHistory ?? []), snapshot].slice(-50),
           });
           if (settings.hapticFeedback) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -242,17 +476,18 @@ export const useStore = create<GameStore>()(
               mistakes: newMistakes,
               won: false,
             });
+            get().syncAfterGame();
           }
         }
       },
-      
+
       eraseCell: () => {
         const state = get();
         if (state.selectedCellIndex === null) return;
-        
+
         const cell = state.cells[state.selectedCellIndex];
         if (cell.isGiven) return;
-        
+
         const updatedCells = [...state.cells];
         updatedCells[state.selectedCellIndex] = {
           ...cell,
@@ -260,9 +495,9 @@ export const useStore = create<GameStore>()(
           notes: null,
           isError: false,
         };
-        
-        set({ cells: updatedCells, moveHistory: [...(state.moveHistory ?? []), createSnapshot(state)] });
-        
+
+        set({ cells: updatedCells, moveHistory: [...(state.moveHistory ?? []), createSnapshot(state)].slice(-50) });
+
         const { settings } = get();
         if (settings.hapticFeedback) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -285,7 +520,7 @@ export const useStore = create<GameStore>()(
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
       },
-      
+
       toggleNotesMode: () => {
         const { settings } = get();
         set((state) => ({ notesMode: !state.notesMode }));
@@ -293,18 +528,18 @@ export const useStore = create<GameStore>()(
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
       },
-      
+
       useHint: () => {
         const state = get();
         if (state.selectedCellIndex === null) return;
-        
+
         const { settings } = get();
         if (settings.hintsPerGame === 0) return;
         if (state.hintsUsed >= settings.hintsPerGame) return;
-        
+
         const cell = state.cells[state.selectedCellIndex];
         if (cell.isGiven || cell.value !== null) return;
-        
+
         const correctNumber = state.solution[cell.row * 9 + cell.col];
         if (!correctNumber) return;
 
@@ -332,18 +567,18 @@ export const useStore = create<GameStore>()(
 
         // Half points for a hint (assisted solve)
         const pts = Math.floor((POINTS_PER_CELL[state.difficulty] ?? 10) / 2);
-        
+
         set({
           cells: updatedCells,
           hintsUsed: state.hintsUsed + 1,
           livePoints: (state.livePoints ?? 0) + pts,
-          moveHistory: [...(state.moveHistory ?? []), createSnapshot(state)],
+          moveHistory: [...(state.moveHistory ?? []), createSnapshot(state)].slice(-50),
         });
-        
+
         if (settings.hapticFeedback) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
-        
+
         // Check puzzle completion after hint
         if (updatedCells.every((c, i) => c.value === state.solution[i])) {
           set({ isPaused: true, isCompleted: true });
@@ -357,9 +592,10 @@ export const useStore = create<GameStore>()(
             mistakes: state.mistakes,
             won: true,
           });
+          get().syncAfterGame();
         }
       },
-      
+
       togglePause: () => {
         set((state) => ({ isPaused: !state.isPaused }));
       },
@@ -409,37 +645,45 @@ export const useStore = create<GameStore>()(
 
       updateSettings: (newSettings: Partial<GameSettings>) => {
         set((state) => ({ settings: { ...state.settings, ...newSettings } }));
+        const userId = get().activeUserId;
+        if (userId) {
+          pushSettings(userId, get().settings).catch(() => {});
+        }
       },
-      
+
       updateStats: (record: GameRecord) => {
         set((state) => {
           const stats = { ...state.stats };
           const settings = { ...state.settings };
-          
+
           if (record.won) {
             stats.totalCompleted += 1;
+            stats.gamesWon = (stats.gamesWon ?? 0) + 1;
+            stats.winsByDifficulty = { ...stats.winsByDifficulty };
+            stats.winsByDifficulty[record.difficulty] =
+              ((stats.winsByDifficulty[record.difficulty] ?? 0) + 1);
+
             stats.currentStreak += 1;
             if (stats.currentStreak > stats.bestStreak) {
               stats.bestStreak = stats.currentStreak;
             }
-            
-            const diffName = record.difficulty;
-            const currentBest = stats.bestTimes[diffName];
+
+            const currentBest = stats.bestTimes[record.difficulty];
             if (!currentBest || record.durationSeconds < currentBest) {
-              stats.bestTimes[diffName] = record.durationSeconds;
+              stats.bestTimes[record.difficulty] = record.durationSeconds;
             }
 
-            // Unlock logic
-            const winsForDifficulty = stats.recentGames.filter(g => g.difficulty === record.difficulty && g.won).length + 1;
+            // Unlock logic — uses persistent winsByDifficulty, not capped recentGames
+            const winsForDiff = stats.winsByDifficulty[record.difficulty] ?? 0;
             const unlocked = new Set(settings.unlockedDifficulties);
 
-            if (record.difficulty === Difficulty.Skill && winsForDifficulty >= 4 && !unlocked.has(Difficulty.Hard)) {
+            if (record.difficulty === Difficulty.Skill && winsForDiff >= 4 && !unlocked.has(Difficulty.Hard)) {
               unlocked.add(Difficulty.Hard);
             }
-            if (record.difficulty === Difficulty.Hard && winsForDifficulty >= 8 && !unlocked.has(Difficulty.Advanced)) {
+            if (record.difficulty === Difficulty.Hard && winsForDiff >= 8 && !unlocked.has(Difficulty.Advanced)) {
               unlocked.add(Difficulty.Advanced);
             }
-            if (record.difficulty === Difficulty.Advanced && winsForDifficulty >= 16) {
+            if (record.difficulty === Difficulty.Advanced && winsForDiff >= 16) {
               if (!unlocked.has(Difficulty.Expert)) unlocked.add(Difficulty.Expert);
               if (!unlocked.has(Difficulty.Master)) unlocked.add(Difficulty.Master);
             }
@@ -448,18 +692,47 @@ export const useStore = create<GameStore>()(
           } else {
             stats.currentStreak = 0;
           }
-          
+
           stats.totalMinutesPlayed += Math.floor(record.durationSeconds / 60);
-          stats.recentGames = [record, ...stats.recentGames].slice(0, 10);
-          
+          stats.recentGames = [record, ...stats.recentGames].slice(0, 50);
+
           return { stats, settings };
         });
       },
-      
+
       resetStats: () => {
         set({ stats: defaultStats });
       },
-      
+
+      resetAppState: () => {
+        const mode = get().dataMode;
+        const userId = get().activeUserId;
+        const key = mode === 'account' && userId ? userStorageKey(userId) : GUEST_STORAGE_KEY;
+        AsyncStorage.removeItem(key).catch(() => {});
+        set({
+          cells: [],
+          solution: [],
+          difficulty: Difficulty.Beginner,
+          elapsedSeconds: 0,
+          mistakes: 0,
+          hintsUsed: 0,
+          isPaused: false,
+          isCompleted: false,
+          isFailed: false,
+          secondChancesUsed: 0,
+          livePoints: 0,
+          startTime: null,
+          selectedCellIndex: null,
+          notesMode: false,
+          moveHistory: [],
+          settings: defaultSettings,
+          stats: defaultStats,
+          syncEnabled: false,
+          activeUserId: null,
+          dataMode: 'guest',
+        });
+      },
+
       tick: () => {
         set((state) => {
           if (state.isPaused || state.isCompleted) return state;
@@ -469,7 +742,7 @@ export const useStore = create<GameStore>()(
     })
 );
 
-AsyncStorage.getItem(STORAGE_KEY)
+AsyncStorage.getItem(GUEST_STORAGE_KEY)
   .then((value) => {
     if (!value) return;
 
@@ -485,5 +758,11 @@ AsyncStorage.getItem(STORAGE_KEY)
   .catch(() => {});
 
 useStore.subscribe((state) => {
-  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(getPersistedState(state))).catch(() => {});
+  if (_persistTimer) clearTimeout(_persistTimer);
+  _persistTimer = setTimeout(() => {
+    const mode = state.dataMode;
+    const userId = state.activeUserId;
+    const key = mode === 'account' && userId ? userStorageKey(userId) : GUEST_STORAGE_KEY;
+    AsyncStorage.setItem(key, JSON.stringify(getPersistedState(state))).catch(() => {});
+  }, 500);
 });

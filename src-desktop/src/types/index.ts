@@ -52,8 +52,13 @@ export interface GameSettings {
 
 export interface GameStats {
   totalCompleted: number;
+  gamesWon: number;
+  totalGamesPlayed: number;          // all-time played (wins + losses)
+  winsByDifficulty: Partial<Record<Difficulty, number>>;
+  totalByDifficulty: Partial<Record<Difficulty, number>>; // all-time played per diff
   currentStreak: number;
   bestStreak: number;
+  lastWinDate: string | null;        // ISO date string of last win (for day-streak)
   totalMinutesPlayed: number;
   bestTimes: Record<string, number>;
   recentGames: GameRecord[];
@@ -65,6 +70,7 @@ export interface GameRecord {
   durationSeconds: number;
   mistakes: number;
   won: boolean;
+  points: number; // points earned this game
 }
 
-export type Screen = 'home' | 'game' | 'stats' | 'settings';
+export type Screen = 'home' | 'game' | 'stats' | 'settings' | 'profile' | 'multiplayer';

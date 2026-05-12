@@ -75,7 +75,7 @@ export const Typography = {
   numpadNumber: {
     fontFamily: 'DM Mono',
     fontSize: 26,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
     lineHeight: 26,
   } as TextStyle,
 

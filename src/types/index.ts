@@ -36,7 +36,7 @@ export interface GameState {
   hintsUsed: number;
   isPaused: boolean;
   isCompleted: boolean;
-  startTime: Date | null;
+  startTime: string | null;
   selectedCellIndex: number | null;
   notesMode: boolean;
   moveHistory: GameSnapshot[];
@@ -57,6 +57,8 @@ export interface GameSettings {
 
 export interface GameStats {
   totalCompleted: number;
+  gamesWon: number;
+  winsByDifficulty: Partial<Record<Difficulty, number>>;
   currentStreak: number;
   bestStreak: number;
   totalMinutesPlayed: number;
