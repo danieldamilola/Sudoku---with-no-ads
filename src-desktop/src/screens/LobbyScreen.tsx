@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: LobbySettings = {
   allowHints: true,
   allowUndo: true,
   hintsPerGame: 3,
+  mistakeLimit: 0,
 };
 
 const TIME_OPTIONS: { label: string; value: number | null }[] = [
@@ -23,6 +24,13 @@ const TIME_OPTIONS: { label: string; value: number | null }[] = [
   { label: '10 min',   value: 600  },
   { label: '15 min',   value: 900  },
   { label: '30 min',   value: 1800 },
+];
+
+const MISTAKE_OPTIONS: { label: string; value: number }[] = [
+  { label: 'No limit', value: 0 },
+  { label: '3', value: 3 },
+  { label: '5', value: 5 },
+  { label: '10', value: 10 },
 ];
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
@@ -93,11 +101,14 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
         </header>
 
         {/* Tab switcher */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 40, background: 'var(--surface-container)', borderRadius: 12, padding: 5 }}>
+        <div className="lobby-tabs">
           {(['create', 'join'] as const).map((t) => (
-            <button key={t} type="button"
+            <button
+              key={t}
+              type="button"
+              className={`lobby-tab${tab === t ? ' is-active' : ''}`}
               onClick={() => { setTab(t); setError(''); setCreatedCode(null); }}
-              style={{ padding: '11px 0', borderRadius: 9, border: 'none', background: tab === t ? 'var(--surface)' : 'transparent', color: tab === t ? 'var(--ink)' : 'var(--muted)', fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: tab === t ? '0 2px 8px rgba(0,0,0,0.08)' : 'none' }}>
+            >
               {t === 'create' ? 'Create Room' : 'Join Room'}
             </button>
           ))}
@@ -105,7 +116,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
 
         {/* ── Error banner ── */}
         {error && (
-          <div style={{ padding: '14px 18px', borderRadius: 10, background: 'var(--red-wash)', color: 'var(--red)', fontSize: 13, fontWeight: 600, marginBottom: 36, border: '1px solid rgba(192,24,15,0.3)' }}>
+          <div className="lobby-banner-error">
             {error}
           </div>
         )}
@@ -115,14 +126,33 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
           <>
             {/* Time limit */}
             <div className="section-head">
-              <span className="section-head-title"><Clock size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} />Time Limit</span>
+              <span className="section-head-title"><Clock size={12} className="lobby-section-icon" />Time Limit</span>
             </div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 40 }}>
+            <div className="lobby-chip-row">
               {TIME_OPTIONS.map(({ label, value }) => (
-                <button key={label} type="button"
+                <button
+                  key={label}
+                  type="button"
                   onClick={() => setSettings((s) => ({ ...s, timeLimitSeconds: value }))}
                   className={settings.timeLimitSeconds === value ? 'primary-button' : 'ghost-button'}
-                  style={{ minHeight: 40, padding: '0 18px', fontSize: 13, borderRadius: 9, transition: 'all 0.2s ease' }}>
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Mistake limit */}
+            <div className="section-head">
+              <span className="section-head-title">Mistake Limit</span>
+            </div>
+            <div className="lobby-chip-row">
+              {MISTAKE_OPTIONS.map(({ label, value }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setSettings((s) => ({ ...s, mistakeLimit: value }))}
+                  className={settings.mistakeLimit === value ? 'primary-button' : 'ghost-button'}
+                >
                   {label}
                 </button>
               ))}
@@ -132,42 +162,50 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
             <div className="section-head">
               <span className="section-head-title">Allowed Features</span>
             </div>
-            <div className="card" style={{ padding: '6px 0', marginBottom: 40 }}>
+            <div className="lobby-settings">
               {[
                 { key: 'allowHints' as const, Icon: Lightbulb, label: 'Hints', sub: `${settings.hintsPerGame} per player` },
                 { key: 'allowUndo'  as const, Icon: RotateCcw,  label: 'Undo',  sub: 'Take back last move' },
               ].map(({ key, Icon, label, sub }, i, arr) => (
                 <div key={key}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <Icon size={16} color="var(--muted)" strokeWidth={2} />
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{label}</div>
-                        <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{sub}</div>
+                  <div className="lobby-settings-row">
+                    <div className="lobby-settings-copy">
+                      <Icon size={16} className="lobby-settings-copy" style={{ color: 'var(--muted)' }} />
+                      <div className="lobby-settings-copy-inner">
+                        <div className="lobby-settings-title">{label}</div>
+                        <div className="lobby-settings-sub">{sub}</div>
                       </div>
                     </div>
-                    <button type="button" onClick={() => setSettings((s) => ({ ...s, [key]: !s[key] }))}
+                    <button
+                      type="button"
+                      className={`lobby-toggle${settings[key] ? ' is-on' : ''}`}
+                      onClick={() => setSettings((s) => ({ ...s, [key]: !s[key] }))}
                       aria-label={`Toggle ${label}`}
-                      style={{ width: 48, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', background: settings[key] ? 'var(--ink)' : 'var(--line)', position: 'relative', transition: 'background 0.25s ease', flexShrink: 0, boxShadow: settings[key] ? '0 2px 6px rgba(0,0,0,0.15)' : 'none' }}>
-                      <span style={{ position: 'absolute', top: 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.25s ease', left: settings[key] ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                    >
+                      <span className="lobby-toggle-knob" />
                     </button>
                   </div>
                   {key === 'allowHints' && settings.allowHints && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 20px 16px 48px' }}>
-                      <span style={{ fontSize: 12, color: 'var(--muted)', marginRight: 4 }}>Per player:</span>
+                    <div className="lobby-hint-row">
+                      <span className="lobby-hint-label">Per player:</span>
                       {[1, 2, 3, 5].map((n) => (
-                        <button key={n} type="button" onClick={() => setSettings((s) => ({ ...s, hintsPerGame: n }))} style={{ width: 38, height: 38, borderRadius: 9, border: '1.5px solid', borderColor: settings.hintsPerGame === n ? 'var(--ink)' : 'var(--line)', background: settings.hintsPerGame === n ? 'var(--ink)' : 'transparent', color: settings.hintsPerGame === n ? '#fff' : 'var(--ink)', fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s ease' }}>
+                        <button
+                          key={n}
+                          type="button"
+                          className={`lobby-stepper${settings.hintsPerGame === n ? ' is-active' : ''}`}
+                          onClick={() => setSettings((s) => ({ ...s, hintsPerGame: n }))}
+                        >
                           {n}
                         </button>
                       ))}
                     </div>
                   )}
-                  {i < arr.length - 1 && <div style={{ height: 1, background: 'var(--line)', margin: '0 20px' }} />}
+                  {i < arr.length - 1 && <div style={{ height: 1, background: 'var(--line)', margin: '0 18px' }} />}
                 </div>
               ))}
             </div>
 
-            <button type="button" className="primary-button" onClick={handleCreate} disabled={loading} style={{ width: '100%', height: 48, borderRadius: 10, fontSize: 15, fontWeight: 700 }}>
+            <button type="button" className="primary-button" onClick={handleCreate} disabled={loading} style={{ width: '100%' }}>
               {loading ? 'Creating room…' : 'Create Room'}
             </button>
           </>
@@ -175,27 +213,23 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
 
         {/* ── Room created — show code ── */}
         {tab === 'create' && createdCode && (
-          <div style={{ textAlign: 'center', paddingTop: 24 }}>
-            <p style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600, marginBottom: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Room created — share this code</p>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 16, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: '24px 40px', marginBottom: 32 }}>
-              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 42, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink)' }}>
-                {createdCode}
-              </span>
-              <button type="button" onClick={handleCopy}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface-container)', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--muted)', display: 'flex', alignItems: 'center' }}>
+          <div className="lobby-created">
+            <p className="lobby-created-label">Room created — share this code</p>
+            <div className="lobby-code-row">
+              <span className="lobby-code-text">{createdCode}</span>
+              <button type="button" onClick={handleCopy} className="lobby-icon-btn">
                 {copied ? <Check size={18} strokeWidth={2.5} /> : <Copy size={18} strokeWidth={2} />}
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 36, lineHeight: 1.5 }}>
+            <p className="lobby-created-hint">
               Share this code with friends. Once they've joined, enter the room to pick difficulty and start.
             </p>
 
             <button type="button" className="primary-button" onClick={handleEnterRoom} style={{ width: '100%' }}>
               Enter Room →
             </button>
-            <button type="button" onClick={() => setCreatedCode(null)}
-              style={{ display: 'block', margin: '16px auto 0', background: 'none', border: 'none', color: 'var(--muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <button type="button" onClick={() => setCreatedCode(null)} className="lobby-text-btn">
               ← Change settings
             </button>
           </div>
@@ -207,8 +241,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
             <div className="section-head">
               <span className="section-head-title">Enter Room Code</span>
             </div>
-            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
-              <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16, lineHeight: 1.5 }}>
+            <div className="lobby-join-panel">
+              <p className="lobby-join-lead">
                 Ask the room host for the 6-character code, then enter it below.
               </p>
               <input
@@ -217,11 +251,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleJoin(); }}
-                style={{ width: '100%', padding: '20px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 32, fontWeight: 800, letterSpacing: '0.25em', textAlign: 'center', outline: 'none', boxSizing: 'border-box', fontFamily: 'DM Mono, monospace', transition: 'border-color 150ms' }}
+                className="lobby-code-input"
                 maxLength={6}
               />
             </div>
-            <button type="button" className="primary-button" onClick={handleJoin} disabled={loading || joinCode.length < 6} style={{ width: '100%', height: 48, borderRadius: 10, fontSize: 15, fontWeight: 700 }}>
+            <button type="button" className="primary-button" onClick={handleJoin} disabled={loading || joinCode.length < 6} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <LogIn size={16} />
               {loading ? 'Joining…' : 'Join Room'}
             </button>
@@ -231,22 +265,20 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onJoinLobby }) => {
         {/* ── How it works ── */}
         {!createdCode && (
           <>
-            <div className="section-head" style={{ marginTop: 48 }}>
+            <div className="section-head lobby-howto">
               <span className="section-head-title">How it works</span>
             </div>
-            <div className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {[
-                  { n: '1', text: 'Host creates a room and gets a 6-letter code' },
-                  { n: '2', text: 'Friends join using that code in the Join tab' },
-                  { n: '3', text: 'Host picks difficulty and starts — everyone plays the same puzzle simultaneously' },
-                ].map(({ n, text }, idx, arr) => (
-                  <div key={n} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, paddingBottom: idx < arr.length - 1 ? 20 : 0 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 800, color: 'var(--ink)' }}>{n}</div>
-                    <p style={{ margin: 0, fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, paddingTop: 5 }}>{text}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="lobby-howto-list">
+              {[
+                { n: '1', text: 'Host creates a room and gets a 6-letter code' },
+                { n: '2', text: 'Friends join using that code in the Join tab' },
+                { n: '3', text: 'Host picks difficulty and starts — everyone plays the same puzzle simultaneously' },
+              ].map(({ n, text }) => (
+                <div key={n} className="lobby-howto-row">
+                  <div className="lobby-howto-num">{n}</div>
+                  <p className="lobby-howto-text">{text}</p>
+                </div>
+              ))}
             </div>
           </>
         )}

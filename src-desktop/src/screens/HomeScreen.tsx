@@ -1,56 +1,28 @@
-import type React from 'react';
-import { useState } from "react";
-import { ArrowRight, ChevronDown, Lock } from "lucide-react";
+import type React from "react";
+import { Lock } from "lucide-react";
 import { useStore } from "../store/useStore";
-import { formatTime } from "../utils/time";
 import type { Difficulty } from "../types";
 
-const DIFF: Record<
-  Difficulty,
-  {
-    tag: string;
-    tier: string;
-    desc: string;
-    tagColor: string;
-  }
-> = {
+const DIFF: Record<Difficulty, { tier: string; desc: string }> = {
   beginner: {
-    tag: "BEGINNER",
     tier: "Beginner",
     desc: "Gentle logic for a quick mental break.",
-    tagColor: "#1a7a40",
   },
-  skill: {
-    tag: "SKILL",
-    tier: "Skill",
-    desc: "Balanced puzzles for daily focus.",
-    tagColor: "#3650d4",
-  },
-  hard: {
-    tag: "HARD",
-    tier: "Hard",
-    desc: "Complex patterns and deep strategy.",
-    tagColor: "#a04f00",
-  },
-  advanced: {
-    tag: "ADVANCED",
-    tier: "Advanced",
-    desc: "Challenging for experienced players.",
-    tagColor: "#c0180f",
-  },
-  expert: {
-    tag: "EXPERT",
-    tier: "Expert",
-    desc: "Extreme challenges for the dedicated.",
-    tagColor: "#c0180f",
-  },
-  master: {
-    tag: "MASTER",
-    tier: "Master",
-    desc: "Ultimate challenge for Sudoku masters.",
-    tagColor: "#6b30d4",
-  },
+  skill: { tier: "Skill", desc: "Balanced puzzles for daily focus." },
+  hard: { tier: "Hard", desc: "Complex patterns and deep strategy." },
+  advanced: { tier: "Advanced", desc: "Challenging for experienced players." },
+  expert: { tier: "Expert", desc: "Extreme challenges for the dedicated." },
+  master: { tier: "Master", desc: "Ultimate challenge for Sudoku masters." },
 };
+
+const DIFFS: Difficulty[] = [
+  "beginner",
+  "skill",
+  "hard",
+  "advanced",
+  "expert",
+  "master",
+];
 
 interface HomeScreenProps {
   onStartGame: (difficulty: Difficulty) => void;
@@ -64,67 +36,85 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const cells = useStore((s) => s.cells);
   const isCompleted = useStore((s) => s.isCompleted);
   const difficulty = useStore((s) => s.difficulty);
-  const elapsed = useStore((s) => s.elapsedSeconds);
   const settings = useStore((s) => s.settings);
   const stats = useStore((s) => s.stats);
   const activeGame = cells.length > 0 && !isCompleted;
   const filled = cells.filter((c) => c.value !== null).length;
   const completion = activeGame ? Math.round((filled / 81) * 100) : 0;
-  const [showAll, setShowAll] = useState(false);
-
-  const allBestTimes = (
-    Object.values(stats.bestTimes) as (number | undefined)[]
-  ).filter((t): t is number => !!t);
-  const bestTime = allBestTimes.length > 0 ? Math.min(...allBestTimes) : null;
 
   const getUnlockReq = (d: Difficulty): string | null => {
     if (settings.unlockedDifficulties.includes(d)) return null;
     switch (d) {
       case "hard":
-        return `Win ${Math.max(0, 4 - (stats.winsByDifficulty['skill'] ?? 0))} more in Skill`;
+        return `Win ${Math.max(0, 4 - (stats.winsByDifficulty["skill"] ?? 0))} more in Skill`;
       case "advanced":
-        return `Win ${Math.max(0, 8 - (stats.winsByDifficulty['hard'] ?? 0))} more in Hard`;
+        return `Win ${Math.max(0, 8 - (stats.winsByDifficulty["hard"] ?? 0))} more in Hard`;
       case "expert":
       case "master":
-        return `Win ${Math.max(0, 16 - (stats.winsByDifficulty['advanced'] ?? 0))} more in Advanced`;
+        return `Win ${Math.max(0, 16 - (stats.winsByDifficulty["advanced"] ?? 0))} more in Advanced`;
       default:
         return null;
     }
   };
 
-  const visible: Difficulty[] = showAll
-    ? ["beginner", "skill", "hard", "advanced", "expert", "master"]
-    : ["beginner", "skill", "hard", "advanced"];
-
   return (
     <main className="screen">
       <div className="screen-inner">
-        {/* ── Hero ── */}
-        <header className="page-header">
-          <div>
-            <h1 className="page-title">Sudoku</h1>
-            <p className="page-subtitle">No ads. No noise. Just the puzzle.</p>
-          </div>
-        </header>
+        <h1
+          style={{
+            margin: "0 0 var(--space-3)",
+            fontSize: "clamp(2.5rem, 3vw + 1rem, 3rem)",
+            fontWeight: 700,
+            letterSpacing: "-0.04em",
+            lineHeight: 1,
+            color: "var(--ink)",
+          }}
+        >
+          Sudoku
+        </h1>
+        <p
+          style={{
+            margin: "0 0 var(--space-7)",
+            fontSize: 15,
+            lineHeight: 1.5,
+            letterSpacing: "-0.01em",
+            color: "var(--muted)",
+            maxWidth: "36ch",
+          }}
+        >
+          No ads. No noise. Just the puzzle.
+        </p>
 
-        {/* ── Continue banner ── */}
+        {/* ── Stats ── */}
+        <p
+          style={{
+            margin: "0 0 var(--space-8)",
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            color: "var(--faint)",
+            fontFamily: "var(--sys-mono)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {stats.totalCompleted} solved · {stats.currentStreak} day streak
+        </p>
+
+        {/* ── Continue (segmented progress) ── */}
         {activeGame && (
           <button
             className="continue-bar"
             type="button"
             onClick={onNavigateGame}
-            aria-label={`Continue ${DIFF[difficulty].tier} puzzle — ${completion}% complete`}
-            style={{ marginBottom: 40 }}
+            style={{ marginBottom: "var(--space-8)" }}
           >
             <div className="continue-left">
               <div className="continue-heading">Continue</div>
               <div className="continue-detail">
-                {DIFF[difficulty].tier}
-                {settings.showTimer ? ` • ${formatTime(elapsed)}` : ""}
-                {` • ${completion}%`}
+                {DIFF[difficulty].tier} · {completion}%
               </div>
             </div>
-            <ArrowRight size={22} className="continue-chevron" strokeWidth={2} />
+            <span className="continue-chevron">→</span>
             <div className="continue-progress-track">
               <div
                 className="continue-progress-fill"
@@ -134,83 +124,151 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </button>
         )}
 
-        {/* ── New Game heading ── */}
-        <div className="section-head">
-          <span className="section-head-title">New game</span>
-          <span className="section-head-label">Select difficulty</span>
-        </div>
-
-        {/* ── Difficulty grid ── */}
-        <section className="difficulty-grid" style={{ marginBottom: 32 }}>
-          {visible.map((id) => {
+        {/* ── Difficulty (dot-matrix indicators) ── */}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {DIFFS.map((id) => {
             const item = DIFF[id];
             const isUnlocked = settings.unlockedDifficulties.includes(id);
             const unlockReq = getUnlockReq(id);
+
             return (
               <button
                 key={id}
-                className={`difficulty-card${!isUnlocked ? " locked" : ""}`}
                 type="button"
                 onClick={() => isUnlocked && onStartGame(id)}
                 disabled={!isUnlocked}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto 1fr auto",
+                  alignItems: "center",
+                  gap: "var(--space-4)",
+                  width: "100%",
+                  padding: "var(--space-4) 0",
+                  textAlign: "left",
+                  cursor: isUnlocked ? "pointer" : "default",
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: "1px solid var(--hairline)",
+                  opacity: isUnlocked ? 1 : 0.4,
+                  transition: "opacity 180ms var(--ease-out)",
+                }}
               >
-                <span
-                  className="difficulty-pill"
+                {/* Dot indicator */}
+                <div
                   style={{
-                    color: isUnlocked ? item.tagColor : "var(--muted)",
-                    borderColor: isUnlocked ? item.tagColor : "var(--line)",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 3px)",
+                    gridTemplateRows: "repeat(2, 3px)",
+                    gap: 2,
+                    flexShrink: 0,
                   }}
                 >
-                  {item.tag}
-                </span>
-                <h2 className="difficulty-tier">{item.tier}</h2>
-                <p className="difficulty-desc">{item.desc}</p>
-                {unlockReq && (
-                  <div className="unlock-req">{unlockReq}</div>
-                )}
-                {!isUnlocked && (
-                  <div className="lock-overlay">
-                    <Lock size={24} color="#fff" strokeWidth={2} />
+                  <span
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: 0.5,
+                      background: isUnlocked ? "var(--ink)" : "transparent",
+                      boxShadow: isUnlocked ? "none" : "inset 0 0 0 1px var(--line-strong)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: 0.5,
+                      background: isUnlocked ? "var(--ink)" : "transparent",
+                      boxShadow: isUnlocked ? "none" : "inset 0 0 0 1px var(--line-strong)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: 0.5,
+                      background: "transparent",
+                      boxShadow: "inset 0 0 0 1px var(--line-strong)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: 0.5,
+                      background: "transparent",
+                      boxShadow: "inset 0 0 0 1px var(--line-strong)",
+                    }}
+                  />
+                </div>
+
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 17,
+                      fontWeight: 600,
+                      letterSpacing: "-0.025em",
+                      color: "var(--ink)",
+                      marginBottom: "var(--space-1)",
+                    }}
+                  >
+                    {item.tier}
                   </div>
-                )}
+                  <div
+                    style={{
+                      fontSize: 14,
+                      lineHeight: 1.45,
+                      color: "var(--muted)",
+                    }}
+                  >
+                    {item.desc}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "var(--space-2)",
+                    flexShrink: 0,
+                  }}
+                >
+                  {unlockReq && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: "0.05em",
+                        color: "var(--muted)",
+                        fontFamily: "var(--sys-mono)",
+                        textAlign: "right",
+                      }}
+                    >
+                      {unlockReq}
+                    </span>
+                  )}
+                  {!isUnlocked ? (
+                    <Lock
+                      size={11}
+                      style={{ color: "var(--muted)", flexShrink: 0 }}
+                      strokeWidth={2}
+                    />
+                  ) : (
+                    <span
+                      style={{
+                        color: "var(--ink)",
+                        fontSize: 14,
+                        flexShrink: 0,
+                        opacity: 0.4,
+                      }}
+                    >
+                      →
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
-        </section>
-
-        <button
-          className="see-more-btn"
-          type="button"
-          onClick={() => setShowAll((v) => !v)}
-        >
-          {showAll ? "Show Less" : "See More"}
-          <ChevronDown
-            size={20}
-            strokeWidth={2}
-            className={`see-more-icon ${showAll ? "is-open" : ""}`}
-          />
-        </button>
-
-        {/* ── Progress strip ── */}
-        <div className="section-head">
-          <span className="section-head-title">Your progress</span>
         </div>
-        <section className="stat-grid">
-          <div className="stat-card">
-            <div className="stat-value">
-              {bestTime ? formatTime(bestTime) : "--:--"}
-            </div>
-            <div className="stat-label">BEST TIME</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{stats.currentStreak}</div>
-            <div className="stat-label">DAY STREAK</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{stats.totalCompleted}</div>
-            <div className="stat-label">SOLVED</div>
-          </div>
-        </section>
       </div>
     </main>
   );

@@ -1,7 +1,7 @@
 // ─── Multiplayer Game Screen ──────────────────────────────────────────────────
 import type React from 'react';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { ArrowLeft, Crown, Eraser, Lightbulb, RotateCcw } from 'lucide-react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { ArrowLeft, Crown, Eraser, Lightbulb, RotateCcw, PencilLine } from 'lucide-react';
 import { BrandMark } from '../components/BrandMark';
 import { useAuth } from '../contexts/AuthContext';
 import { joinLobby, startLobbyGame, pushProgress, subscribeLobby } from '../lib/multiplayer';
@@ -33,6 +33,10 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
   const [hostDifficulty, setHostDifficulty] = useState<Difficulty>('skill');
   const [animCell, setAnimCell] = useState<{ idx: number; cls: string } | null>(null);
   const [cellHistory, setCellHistory] = useState<SudokuCell[][]>([]);
+  const [notesMode, setNotesMode] = useState(false);
+  const [combo, setCombo] = useState(0);
+  const [comboTimer, setComboTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [score, setScore] = useState(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const unsubRef = useRef<(() => void) | null>(null);
@@ -52,7 +56,20 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
 
   const isHost = lobby?.hostId === user?.id;
   const myPlayer = lobby?.players.find((p) => p.userId === user?.id);
-  const settings = lobby?.settings ?? { timeLimitSeconds: null, allowHints: true, allowUndo: true, hintsPerGame: 3 };
+  const settings = lobby?.settings ?? { timeLimitSeconds: null, allowHints: true, allowUndo: true, hintsPerGame: 3, mistakeLimit: 0 };
+
+  /* Number counts per digit */
+  const digitCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (let n = 1; n <= 9; n++) counts[n] = cells.filter(c => c.value === n && !c.isError).length;
+    return counts;
+  }, [cells]);
+
+  const completedNumbers = useMemo(() => {
+    const done = new Set<number>();
+    for (let n = 1; n <= 9; n++) if (digitCounts[n] >= 9) done.add(n);
+    return done;
+  }, [digitCounts]);
 
   const startTimer = useCallback(() => {
     if (timerRef.current) return;
@@ -61,7 +78,10 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
   const stopTimer = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
-  useEffect(() => () => stopTimer(), [stopTimer]);
+  useEffect(() => () => {
+    stopTimer();
+    if (comboTimer) clearTimeout(comboTimer);
+  }, [stopTimer, comboTimer]);
 
   // Load lobby on mount
   useEffect(() => {
@@ -73,6 +93,8 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
         setCells(l.puzzle);
         setSolution(l.solution ?? []);
         setPhase('playing');
+        setCombo(0);
+        setScore(0);
         startTimer();
       }
       if (l.status === 'finished') setPhase('finished');
@@ -90,6 +112,8 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
         setCells(updated.puzzle);
         setSolution(updated.solution ?? []);
         setPhase('playing');
+        setCombo(0);
+        setScore(0);
         startTimer();
       }
       if (updated.status === 'finished') {
@@ -132,6 +156,18 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
     const cell = cells[selected];
     if (cell.isGiven) return;
 
+    // Notes mode: toggle notes instead of setting value
+    if (notesMode) {
+      const notes = cell.notes ? [...cell.notes] : [];
+      const idx = notes.indexOf(num);
+      if (idx >= 0) notes.splice(idx, 1); else notes.push(num);
+      const updatedCells = [...cells];
+      updatedCells[selected] = { ...cell, notes };
+      setCellHistory((h) => [...h, cells].slice(-30));
+      setCells(updatedCells);
+      return;
+    }
+
     const isCorrect = solution[selected] === num;
     const wasAlreadyWrong = cell.isError;
     const updatedCells = [...cells];
@@ -142,8 +178,42 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
     const newMistakes = (!isCorrect && !wasAlreadyWrong) ? mistakes + 1 : mistakes;
     if (newMistakes !== mistakes) setMistakes(newMistakes);
 
+    // Combo scoring logic
+    if (settings.mistakeLimit === 0 && isCorrect) {
+      // Clear existing combo timer
+      if (comboTimer) clearTimeout(comboTimer);
+      
+      // Increment combo
+      const newCombo = combo + 1;
+      setCombo(newCombo);
+      
+      // Calculate score: base 10 points, plus bonus for 3+ combo
+      let pointsEarned = 10;
+      if (newCombo >= 3) {
+        const comboTotal = newCombo * 10;
+        const bonus = Math.floor(comboTotal / 2);
+        pointsEarned += bonus;
+      }
+      setScore(prev => prev + pointsEarned);
+      
+      // Reset combo after 3 seconds of no correct moves
+      setComboTimer(setTimeout(() => setCombo(0), 3000));
+    } else if (settings.mistakeLimit === 0 && !isCorrect) {
+      // Reset combo on mistake
+      setCombo(0);
+      if (comboTimer) clearTimeout(comboTimer);
+    }
+
     const filled = updatedCells.filter(c => c.value !== null && !c.isError).length;
     const done = SudokuValidator.isBoardComplete(updatedCells, solution);
+
+    // Check mistake limit
+    if (settings.mistakeLimit > 0 && newMistakes >= settings.mistakeLimit) {
+      stopTimer();
+      setFinished(true);
+      await pushProgress(lobby.id, user.id, filled, newMistakes, hintsUsed, true);
+      return;
+    }
 
     if (done) {
       stopTimer();
@@ -184,10 +254,10 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
   const handleErase = async () => {
     if (selected === null || phase !== 'playing' || finished || !lobby || !user) return;
     const cell = cells[selected];
-    if (cell.isGiven || cell.value === null) return;
+    if (cell.isGiven) return;
     setCellHistory((h) => [...h, cells].slice(-30));
     const updatedCells = [...cells];
-    updatedCells[selected] = { ...cell, value: null, isError: false };
+    updatedCells[selected] = { ...cell, value: null, notes: [], isError: false };
     setCells(updatedCells);
     const filled = updatedCells.filter(c => c.value !== null && !c.isError).length;
     await pushProgress(lobby.id, user.id, filled, mistakes, hintsUsed, false);
@@ -317,6 +387,20 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
                 <span className="eyebrow">Mistakes</span>
                 <span className="info-value" style={{ color: mistakes > 0 ? 'var(--red)' : 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{mistakes}</span>
               </div>
+              {settings.mistakeLimit === 0 && (
+                <>
+                  <div className="info-row">
+                    <span className="eyebrow">Score</span>
+                    <span className="info-value" style={{ color: 'var(--purple)', fontVariantNumeric: 'tabular-nums' }}>{score}</span>
+                  </div>
+                  {combo > 0 && (
+                    <div className="info-row">
+                      <span className="eyebrow">Combo</span>
+                      <span className="info-value" style={{ color: 'var(--orange)', fontVariantNumeric: 'tabular-nums' }}>{combo}x</span>
+                    </div>
+                  )}
+                </>
+              )}
               <div className="info-row">
                 <span className="eyebrow">Timer</span>
                 <span className="info-value" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsed)}</span>
@@ -399,7 +483,13 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
                     disabled={finished}
                     aria-selected={selected === idx}
                   >
-                    {cell.value !== null ? <span className="cell-number">{cell.value}</span> : null}
+                    {cell.value !== null ? <span className="cell-number">{cell.value}</span> : cell.notes?.length ? (
+                      <span className="notes-grid">
+                        {Array.from({ length: 9 }, (_, n) => n + 1).map((n) => (
+                          <span key={n} className="note">{cell.notes?.includes(n) ? n : ''}</span>
+                        ))}
+                      </span>
+                    ) : null}
                   </button>
                 ))}
               </div>
@@ -421,6 +511,9 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
             <button className="tool-button" type="button" onClick={handleErase} disabled={finished || phase !== 'playing'}>
               <Eraser size={18} /><span>Erase</span>
             </button>
+            <button className={`tool-button ${notesMode ? 'active' : ''}`} type="button" onClick={() => setNotesMode(!notesMode)} disabled={finished || phase !== 'playing'}>
+              <PencilLine size={18} /><span>Notes</span>
+            </button>
           </div>
         </div>
 
@@ -436,18 +529,24 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
         <div className="control-section">
           <div className="control-label">Numbers</div>
           <div className="number-pad">
-            {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
-              <button
-                key={n}
-                className="number-key"
-                type="button"
-                onClick={() => handleNumber(n)}
-                disabled={finished || phase !== 'playing'}
-                aria-label={`Enter ${n}`}
-              >
-                {n}
-              </button>
-            ))}
+            {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => {
+              const remaining = 9 - (digitCounts[n] ?? 0);
+              return (
+                <button
+                  key={n}
+                  className="number-key"
+                  type="button"
+                  onClick={() => handleNumber(n)}
+                  disabled={finished || phase !== 'playing' || completedNumbers.has(n)}
+                  aria-label={`Enter ${n}, ${remaining} remaining`}
+                >
+                  {n}
+                  {remaining > 0 && remaining < 9 && (
+                    <span className="number-key-count">{remaining}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -459,8 +558,8 @@ export const MultiplayerGameScreen: React.FC<MultiplayerGameScreenProps> = ({ lo
       {/* ── Results overlay (matches victory-backdrop) ── */}
       {(finished || phase === 'finished') && (
         <div className="victory-backdrop">
-          <div className="victory-card" style={{ width: 'min(520px, 92vw)', maxHeight: '80vh', overflowY: 'auto' }}>
-            <FinishedState myPlayer={myPlayer} lobby={lobby} elapsed={elapsed} onLeave={onLeave} />
+          <div className="victory-card">
+            <FinishedState myPlayer={myPlayer} lobby={lobby} elapsed={elapsed} score={score} onLeave={onLeave} />
           </div>
         </div>
       )}
@@ -495,12 +594,35 @@ const PlayerCard: React.FC<{ player: LobbyPlayer; isMe: boolean }> = ({ player, 
 };
 
 
-const FinishedState: React.FC<{ myPlayer: LobbyPlayer | undefined; lobby: Lobby; elapsed: number; onLeave: () => void }> = ({ myPlayer, lobby, elapsed, onLeave }) => {
+const FinishedState: React.FC<{ myPlayer: LobbyPlayer | undefined; lobby: Lobby; elapsed: number; score: number; onLeave: () => void }> = ({ myPlayer, lobby, elapsed, score, onLeave }) => {
+  const useScoring = lobby.settings.mistakeLimit === 0;
+
+  // Calculate score: 81 points for completion, minus 10 points per mistake
+  const calculateScore = (player: LobbyPlayer) => {
+    const baseScore = player.progress;
+    const mistakePenalty = player.mistakes * 10;
+    return Math.max(0, baseScore - mistakePenalty);
+  };
+
   const sorted = [...lobby.players].sort((a, b) => {
-    if (a.finishedAt && b.finishedAt) return new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime();
-    if (a.finishedAt) return -1;
-    if (b.finishedAt) return 1;
-    return b.progress - a.progress;
+    if (useScoring) {
+      // Use score + time for ranking
+      const scoreA = a.userId === myPlayer?.userId ? score : calculateScore(a);
+      const scoreB = b.userId === myPlayer?.userId ? score : calculateScore(b);
+      if (scoreA !== scoreB) return scoreB - scoreA;
+
+      // If scores are equal, use finish time (lower is better)
+      if (a.finishedAt && b.finishedAt) return new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime();
+      if (a.finishedAt) return -1;
+      if (b.finishedAt) return 1;
+      return b.progress - a.progress;
+    } else {
+      // Original logic: by finish time, then progress
+      if (a.finishedAt && b.finishedAt) return new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime();
+      if (a.finishedAt) return -1;
+      if (b.finishedAt) return 1;
+      return b.progress - a.progress;
+    }
   });
   const winner = sorted[0];
   const iWon = myPlayer?.userId === winner?.userId;
@@ -520,29 +642,32 @@ const FinishedState: React.FC<{ myPlayer: LobbyPlayer | undefined; lobby: Lobby;
         </div>
         <div>
           <div className="victory-stat-val" style={{ color: myPlayer && myPlayer.mistakes === 0 ? 'var(--green)' : 'var(--red)' }}>{myPlayer?.mistakes ?? 0}</div>
-          <div className="victory-stat-lbl">Your Mistakes</div>
+          <div className="victory-stat-lbl">Mistakes</div>
         </div>
-        <div>
-          <div className="victory-stat-val" style={{ color: 'var(--orange)' }}>{lobby.players.filter(p => p.finishedAt).length}/{lobby.players.length}</div>
-          <div className="victory-stat-lbl">Finished</div>
-        </div>
+        {useScoring && myPlayer && (
+          <div>
+            <div className="victory-stat-val" style={{ color: 'var(--purple)' }}>{score}</div>
+            <div className="victory-stat-lbl">Score</div>
+          </div>
+        )}
       </div>
 
-      {/* Leaderboard — no opponent mistakes shown */}
-      <div style={{ border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden', marginBottom: 28 }}>
-        {sorted.map((p, rank) => (
-          <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: rank < sorted.length - 1 ? '1px solid var(--line)' : 'none', background: p.userId === myPlayer?.userId ? 'var(--blue-wash)' : 'transparent' }}>
-            <span style={{ fontSize: 18, flexShrink: 0 }}>{rank < 3 ? RANK_MEDAL[rank] : `#${rank + 1}`}</span>
-            <span style={{ flex: 1, fontWeight: p.userId === myPlayer?.userId ? 800 : 600, fontSize: 14, color: 'var(--ink)', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {p.displayName}{p.userId === myPlayer?.userId ? ' (you)' : ''}
-            </span>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: p.finishedAt ? 'var(--green)' : 'var(--ink)' }}>
-                {p.finishedAt ? '✓ Done' : `${Math.round((p.progress / 81) * 100)}%`}
+      {/* Leaderboard */}
+      <div className="victory-leaderboard">
+        <div className="victory-leaderboard-title">Leaderboard</div>
+        <div className="victory-leaderboard-list">
+          {sorted.map((p, rank) => (
+            <div key={p.userId} className={`victory-leaderboard-item ${p.userId === myPlayer?.userId ? 'is-me' : ''}`}>
+              <span className="victory-leaderboard-rank">{rank < 3 ? RANK_MEDAL[rank] : `#${rank + 1}`}</span>
+              <span className="victory-leaderboard-name">
+                {p.displayName}{p.userId === myPlayer?.userId ? ' (you)' : ''}
+              </span>
+              <div className={`victory-leaderboard-score ${p.finishedAt ? 'done' : ''}`}>
+                {useScoring ? `${p.userId === myPlayer?.userId ? score : calculateScore(p)} pts` : p.finishedAt ? '✓ Done' : `${Math.round((p.progress / 81) * 100)}%`}
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className="victory-actions">

@@ -7,6 +7,7 @@ export interface LobbySettings {
   allowHints: boolean;
   allowUndo: boolean;
   hintsPerGame: number;
+  mistakeLimit: number; // 0 = no limit
   difficulty?: string; // set by host when game starts
 }
 
@@ -172,7 +173,7 @@ function mapPlayer(row: Record<string, unknown>): LobbyPlayer {
 }
 
 function mapLobby(row: Record<string, unknown>, players: LobbyPlayer[]): Lobby {
-  const settings = (row.settings as LobbySettings) ?? { timeLimitSeconds: null, allowHints: true, allowUndo: true, hintsPerGame: 3 };
+  const settings = (row.settings as LobbySettings) ?? { timeLimitSeconds: null, allowHints: true, allowUndo: true, hintsPerGame: 3, mistakeLimit: 0 };
   return {
     id: row.id as string,
     code: row.code as string,

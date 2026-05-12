@@ -71,6 +71,7 @@ interface GameStore extends GameState {
   isFailed: boolean;
   secondChancesUsed: number;
   livePoints: number;
+  combo: number;
   // Sync
   syncEnabled: boolean;
   activeUserId: string | null;
@@ -134,6 +135,7 @@ export const useStore = create<GameStore>()((set, get) => ({
   isFailed: false,
   secondChancesUsed: 0,
   livePoints: 0,
+  combo: 0,
   startTime: null,
   selectedCellIndex: null,
   notesMode: false,
@@ -307,7 +309,7 @@ export const useStore = create<GameStore>()((set, get) => ({
       cells, solution, difficulty,
       elapsedSeconds: 0, mistakes: 0, hintsUsed: 0,
       isPaused: false, isCompleted: false, isFailed: false,
-      secondChancesUsed: 0, livePoints: 0,
+      secondChancesUsed: 0, livePoints: 0, combo: 0,
       startTime: new Date().toISOString(),
       selectedCellIndex: null, notesMode: false, moveHistory: [],
     });
@@ -355,16 +357,40 @@ export const useStore = create<GameStore>()((set, get) => ({
           }
         }
       }
-      set({ cells: updatedCells, moveHistory: [...state.moveHistory, snapshot].slice(-50), livePoints: state.livePoints + pts });
+
+      // Combo scoring logic
+      const newCombo = state.combo + 1;
+      let pointsEarned = pts;
+      if (newCombo >= 3) {
+        const comboTotal = newCombo * 10;
+        const bonus = Math.floor(comboTotal / 2);
+        pointsEarned += bonus;
+      }
+
+      set({ 
+        cells: updatedCells, 
+        moveHistory: [...state.moveHistory, snapshot].slice(-50), 
+        livePoints: state.livePoints + pointsEarned,
+        combo: newCombo
+      });
+
+      // Reset combo after 3 seconds
+      setTimeout(() => {
+        const currentState = get();
+        if (currentState.combo === newCombo) {
+          set({ combo: 0 });
+        }
+      }, 3000);
+
       if (SudokuValidator.isBoardComplete(updatedCells, state.solution)) {
-        set({ isPaused: true, isCompleted: true });
+        set({ isPaused: true, isCompleted: true, combo: 0 });
         get().stopTimer();
-        get().updateStats({ date: new Date().toISOString(), difficulty: state.difficulty, durationSeconds: state.elapsedSeconds, mistakes: state.mistakes, won: true, points: state.livePoints + pts });
+        get().updateStats({ date: new Date().toISOString(), difficulty: state.difficulty, durationSeconds: state.elapsedSeconds, mistakes: state.mistakes, won: true, points: state.livePoints + pointsEarned });
         get().syncAfterGame();
       }
     } else {
       const newMistakes = state.mistakes + 1;
-      set({ cells: updatedCells, mistakes: newMistakes, moveHistory: [...state.moveHistory, snapshot].slice(-50) });
+      set({ cells: updatedCells, mistakes: newMistakes, moveHistory: [...state.moveHistory, snapshot].slice(-50), combo: 0 });
       if (settings.mistakeLimit > 0 && newMistakes >= settings.mistakeLimit) {
         set({ isPaused: true, isCompleted: true, isFailed: true });
         get().stopTimer();

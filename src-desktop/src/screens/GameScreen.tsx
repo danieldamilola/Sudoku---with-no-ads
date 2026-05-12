@@ -31,6 +31,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, onNavigate }) =>
   const hintsUsed       = useStore((s) => s.hintsUsed);
   const secondChancesUsed = useStore((s) => s.secondChancesUsed);
   const settings        = useStore((s) => s.settings);
+  const combo           = useStore((s) => s.combo);
   const selectCell      = useStore((s) => s.selectCell);
   const enterNumber     = useStore((s) => s.enterNumber);
   const toggleNotesMode = useStore((s) => s.toggleNotesMode);
@@ -187,6 +188,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBack, onNavigate }) =>
               {mistakeText}
             </span>
           </div>
+          {combo > 0 && (
+            <div className="info-row">
+              <span className="eyebrow">Combo</span>
+              <span className="info-value" style={{ color: 'var(--orange)', fontVariantNumeric: 'tabular-nums' }}>{combo}x</span>
+            </div>
+          )}
           <div className="info-row">
             <span className="eyebrow">Timer</span>
             <span className="info-value" style={{ fontVariantNumeric: 'tabular-nums' }}>
